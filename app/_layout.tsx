@@ -1,3 +1,4 @@
+import { StyleSheet } from "react-native";
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -32,6 +33,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
+        <Stack.Screen name="test2" options={{ title: "Add Subscription" }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

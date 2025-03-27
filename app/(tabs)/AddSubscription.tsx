@@ -3,12 +3,13 @@ import { useState } from "react";
 import { View, Text, StyleSheet, Button, TouchableOpacity, } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
-import { useNavigation } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 
 export default function AddSubscription() {
 
-    const navigation = useNavigation();
+    const router = useRouter();
     const [appName, setAppName] = useState('');
     const [price, setPrice] = useState('');
     const [subscriptionDate, setSubscriptionDate] = useState('');
@@ -26,8 +27,8 @@ export default function AddSubscription() {
         const subscriptions = storedData ? JSON.parse(storedData) : [];
         subscriptions.push(newSubscription);
         await AsyncStorage.setItem("subscriptions", JSON.stringify(subscriptions));
-        navigation.goBack();
-    }
+        router.replace("/");
+    };
 
   return (
     <View style={styles.mainView}>

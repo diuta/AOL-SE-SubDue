@@ -1,12 +1,50 @@
-import AddSubscriptionButton from "@/components/AddSubscriptionButton";
+import RemoveSubscriptionButton from "@/components/RemoveSubscriptionButton";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 
+interface Subscription {
+  id: string;
+  appName: string;
+  price: Int16Array;
+  subscriptionDate: string;
+  dueDate: string;
+  billing: string;
+}
+
 export default function SubscriptionList() {
+
+  const[subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  
+  useEffect(() => {
+    loadSubscriptions();
+  }, []);
+
+  const loadSubscriptions = async () => {
+    const storedData = await AsyncStorage.getItem("subscriptions");
+    if (!storedData) return;
+    const subscriptions: Subscription[] = JSON.parse(storedData);
+    setSubscriptions(subscriptions);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSubscriptions();
+    }, [])
+  );
+  
   return (
     <View style={styles.mainView}>
-      <Text style={styles.header}>Subscription Card</Text>
-      <View style={styles.subscriptionCard}></View>
-      <AddSubscriptionButton />
+      <Text style={styles.header}>Subscriptions</Text>
+      {subscriptions.map((subscription) => (
+        <View key={subscription.id} style={styles.subscriptionCard}>
+          <Text>App   :  {subscription.appName}</Text>
+          <Text>Price :  Rp.{subscription.price},-</Text>
+          <Text>Due   :  {subscription.dueDate} ({subscription.billing})</Text>
+          <RemoveSubscriptionButton id={subscription.id} onUpdate={loadSubscriptions} />
+        </View>
+      ))}
     </View>
   );
 }
@@ -22,20 +60,16 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     fontSize: 20,
-    margin: 20,
+    marginTop: '10%',
+    marginBottom: '10%',
     fontWeight: "bold",
   },
   subscriptionCard: {
-    backgroundColor: "gray",
-    width: "80%",
-    height: "15%",
+    backgroundColor: "#f9f9f9",
+    padding: 15,
+    marginVertical: 10,
     borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    padding: 10,
-    marginBottom: 10,
+    elevation: 3,
+    width: "90%",
   },
 });

@@ -2,7 +2,6 @@ import { Stack } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { RedRose_400Regular, RedRose_700Bold, useFonts } from '@expo-google-fonts/red-rose';
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({

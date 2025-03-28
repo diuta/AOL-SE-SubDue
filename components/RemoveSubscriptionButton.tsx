@@ -16,7 +16,7 @@ export default function RemoveSubscriptionButton({ id, onUpdate }: RemoveSubscri
     const filteredSubscriptions = subscriptions.filter((sub: { id: string }) => sub.id !== id);
     
     await AsyncStorage.setItem("subscriptions", JSON.stringify(filteredSubscriptions));
-    onUpdate(); // Refresh the list
+    onUpdate();
   };
 
   return (

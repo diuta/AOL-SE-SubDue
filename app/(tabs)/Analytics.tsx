@@ -28,6 +28,7 @@ interface Subscription {
   dueDate: string;
   billing: string;
   category?: string;
+  icon?: string;
 }
 
 const screenWidth = Dimensions.get("window").width - 40;

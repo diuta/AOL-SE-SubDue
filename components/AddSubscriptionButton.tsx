@@ -7,7 +7,12 @@ export default function AddSubscriptionButton() {
   return (
     <TouchableOpacity
       style={styles.button}
-      onPress={() => router.push("/AddSubscription")}
+      onPress={() =>
+        router.push({
+          pathname: "/AddSubscription",
+          params: { id: null },
+        })
+      }
     >
       <Text style={styles.text}>Add Subscription</Text>
     </TouchableOpacity>

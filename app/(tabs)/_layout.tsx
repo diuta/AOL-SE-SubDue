@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { View, StyleSheet, Platform } from "react-native";
 
 export default function TabsLayout() {
+  const router = useRouter();
+
   return (
     <Tabs
       screenOptions={{
@@ -52,6 +54,15 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="AddSubscription"
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.push({
+              pathname: "/AddSubscription",
+              params: { id: "" },
+            });
+          },
+        }}
         options={{
           tabBarIcon: ({ focused }) => (
             <View

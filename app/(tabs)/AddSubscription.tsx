@@ -13,18 +13,40 @@ import {
 import { TextInput } from "react-native-gesture-handler";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import RNPickerSelect from "react-native-picker-select";
-import { addDays, addMonths, addYears, format } from "date-fns";
+import { addDays, addMonths, addYears, format, parse } from "date-fns";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DatabaseService from "@/utils/DatabaseService";
 import DatePicker from "@/components/DatePicker";
 import { formatCurrency } from "@/utils/formatUtils";
+
+// Define valid icon names
+const VALID_ICONS = [
+  "cart-outline",
+  "calendar-outline",
+  "tv-outline",
+  "analytics-outline",
+  "book-outline",
+  "barbell-outline",
+  "cloud-outline",
+  "film-outline",
+  "heart-outline",
+  "pricetag-outline",
+  "star-outline",
+  "apps-outline",
+  "cash-outline",
+  "laptop-outline",
+  "gift-outline",
+  "home-outline",
+] as const;
+
+type IconName = (typeof VALID_ICONS)[number];
 
 type Subscription = {
   id: string;
@@ -34,6 +56,7 @@ type Subscription = {
   dueDate: string;
   billing: string;
   category?: string;
+  icon?: string;
 };
 
 type ValidationErrors = {
@@ -46,12 +69,17 @@ export default function AddSubscription() {
   const colorScheme = useColorScheme() || "light";
   const colors = Colors[colorScheme];
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const subscriptionId = params.id as string;
+  const isEditMode = !!subscriptionId && subscriptionId.trim() !== "";
+
   const [appName, setAppName] = useState<string>("");
   const [price, setPrice] = useState<string>("");
   const [subscriptionDate, setSubscriptionDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [billing, setBilling] = useState<string>("");
   const [category, setCategory] = useState<string>("");
+  const [icon, setIcon] = useState<IconName | "">("");
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [isWeb, setIsWeb] = useState<boolean>(Platform.OS === "web");
   const [slideAnim] = useState(new Animated.Value(100));
@@ -79,23 +107,71 @@ export default function AddSubscription() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // If in edit mode, load the subscription data
+    if (isEditMode) {
+      loadSubscriptionData();
+    }
   }, []);
+
+  const loadSubscriptionData = async () => {
+    try {
+      const subscriptions =
+        await DatabaseService.getSubscriptions<Subscription>();
+      const subscription = subscriptions.find(
+        (sub) => sub.id === subscriptionId,
+      );
+
+      if (subscription) {
+        setAppName(subscription.appName);
+        setPrice(subscription.price);
+
+        // Parse the date strings to Date objects
+        const parsedSubscriptionDate = parse(
+          subscription.subscriptionDate,
+          "dd MMMM yyyy",
+          new Date(),
+        );
+        setSubscriptionDate(parsedSubscriptionDate);
+
+        const parsedDueDate = parse(
+          subscription.dueDate,
+          "dd MMMM yyyy",
+          new Date(),
+        );
+        setDueDate(parsedDueDate);
+
+        setBilling(subscription.billing);
+        setCategory(subscription.category || "");
+        setIcon((subscription.icon as IconName) || "");
+      }
+    } catch (error) {
+      console.error("Error loading subscription:", error);
+    }
+  };
 
   useFocusEffect(
     React.useCallback(() => {
-      setAppName("");
-      setPrice("");
-      setSubscriptionDate(new Date());
-      setDueDate(new Date());
-      setBilling("");
-      setCategory("");
-      setErrors({});
-      setTouched({
-        appName: false,
-        price: false,
-        billing: false,
-      });
-    }, []),
+      // Only reset form if not in edit mode
+      if (!isEditMode) {
+        setAppName("");
+        setPrice("");
+        setSubscriptionDate(new Date());
+        setDueDate(new Date());
+        setBilling("");
+        setCategory("");
+        setIcon("");
+        setErrors({});
+        setTouched({
+          appName: false,
+          price: false,
+          billing: false,
+        });
+      } else {
+        // Reload data when focusing in edit mode
+        loadSubscriptionData();
+      }
+    }, [isEditMode]),
   );
 
   // Update the due date whenever subscription date or billing changes
@@ -222,21 +298,32 @@ export default function AddSubscription() {
       return;
     }
 
-    const newSubscription: Subscription = {
-      id: uuidv4(),
+    const subscriptionData: Subscription = {
+      id: isEditMode ? subscriptionId : uuidv4(),
       appName,
       price,
       subscriptionDate: formattedDate,
       dueDate: formattedDueDate,
       billing,
       category: category || undefined,
+      icon: icon || undefined,
     };
 
     try {
-      await DatabaseService.addSubscription(newSubscription);
+      if (isEditMode) {
+        await DatabaseService.updateSubscriptionById(
+          subscriptionId,
+          subscriptionData,
+        );
+      } else {
+        await DatabaseService.addSubscription(subscriptionData);
+      }
       router.replace("/");
     } catch (error) {
-      console.error("Error saving subscription:", error);
+      console.error(
+        `Error ${isEditMode ? "updating" : "saving"} subscription:`,
+        error,
+      );
       // You could add error handling UI here
     }
   };
@@ -265,9 +352,11 @@ export default function AddSubscription() {
           ]}
         >
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>Add Subscription</Text>
+            <Text style={styles.title}>
+              {isEditMode ? "Edit" : "Add"} Subscription
+            </Text>
             <Text style={styles.subtitle}>
-              Enter the details of your subscription
+              {isEditMode ? "Update" : "Enter"} the details of your subscription
             </Text>
             <Text style={styles.requiredNote}>
               <Text style={styles.requiredIndicator}>*</Text> Required fields
@@ -319,9 +408,11 @@ export default function AddSubscription() {
           <View style={styles.formGroup}>
             <Text style={styles.label}>
               Subscription Date{" "}
-              <Text style={styles.autoFilledNote}>
-                (Auto-filled with today)
-              </Text>
+              {!isEditMode && (
+                <Text style={styles.autoFilledNote}>
+                  (Auto-filled with today)
+                </Text>
+              )}
             </Text>
             <DatePicker
               value={subscriptionDate}
@@ -417,6 +508,39 @@ export default function AddSubscription() {
             </View>
           </View>
 
+          {/* Icon Selection */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Icon (Optional)</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.iconScrollView}
+            >
+              <View style={styles.iconPickerContainer}>
+                {VALID_ICONS.map((iconName) => (
+                  <TouchableOpacity
+                    key={iconName}
+                    style={[
+                      styles.iconOption,
+                      icon === iconName && styles.selectedIconOption,
+                    ]}
+                    onPress={() => setIcon(iconName)}
+                  >
+                    <Ionicons
+                      name={
+                        icon === iconName
+                          ? (iconName.replace("-outline", "") as any)
+                          : iconName
+                      }
+                      size={24}
+                      color={icon === iconName ? "#FFFFFF" : "#9D9DB5"}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
           <View style={styles.dueDateContainer}>
             <Text style={styles.dueLabel}>Next payment due:</Text>
             <Text style={styles.dueDate}>
@@ -435,7 +559,9 @@ export default function AddSubscription() {
               style={styles.saveButton}
               onPress={saveSubscription}
             >
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>
+                {isEditMode ? "Update" : "Save"}
+              </Text>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -702,5 +828,27 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#9D9DB5",
     fontWeight: "normal",
+  },
+  iconPickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+  },
+  iconOption: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#1A1A2E",
+    marginHorizontal: 6,
+  },
+  selectedIconOption: {
+    backgroundColor: "#4649E5",
+  },
+  iconScrollView: {
+    flexDirection: "row",
   },
 });

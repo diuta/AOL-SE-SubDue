@@ -1,4 +1,5 @@
 import RemoveSubscriptionButton from "@/components/RemoveSubscriptionButton";
+import EditSubscriptionButton from "@/components/EditSubscriptionButton";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -13,6 +14,28 @@ import { Ionicons } from "@expo/vector-icons";
 import DatabaseService from "@/utils/DatabaseService";
 import { formatCurrency } from "@/utils/formatUtils";
 
+// Define valid icon names
+const VALID_ICONS = [
+  "cart-outline",
+  "calendar-outline",
+  "tv-outline",
+  "analytics-outline",
+  "book-outline",
+  "barbell-outline",
+  "cloud-outline",
+  "film-outline",
+  "heart-outline",
+  "pricetag-outline",
+  "star-outline",
+  "apps-outline",
+  "cash-outline",
+  "laptop-outline",
+  "gift-outline",
+  "home-outline",
+] as const;
+
+type IconName = (typeof VALID_ICONS)[number];
+
 interface Subscription {
   id: string;
   appName: string;
@@ -21,6 +44,7 @@ interface Subscription {
   dueDate: string;
   billing: string;
   category?: string;
+  icon?: IconName;
 }
 
 export default function SubscriptionList() {
@@ -77,7 +101,17 @@ export default function SubscriptionList() {
             <View key={subscription.id} style={styles.subscriptionCard}>
               <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.appName}>{subscription.appName}</Text>
+                  <View style={styles.appNameContainer}>
+                    {subscription.icon && (
+                      <Ionicons
+                        name={subscription.icon.replace("-outline", "") as any}
+                        size={20}
+                        color="#4649E5"
+                        style={styles.appIcon}
+                      />
+                    )}
+                    <Text style={styles.appName}>{subscription.appName}</Text>
+                  </View>
                   <Text style={styles.price}>
                     {formatCurrency(parseFloat(subscription.price))}
                   </Text>
@@ -110,6 +144,7 @@ export default function SubscriptionList() {
                 </View>
               </View>
               <View style={styles.buttonContainer}>
+                <EditSubscriptionButton id={subscription.id} />
                 <RemoveSubscriptionButton
                   id={subscription.id}
                   onUpdate={loadSubscriptions}
@@ -187,6 +222,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  appNameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  appIcon: {
+    marginRight: 8,
+  },
   appName: {
     color: "white",
     fontSize: 18,
@@ -214,6 +256,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 12,
-    alignItems: "flex-end",
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
 });

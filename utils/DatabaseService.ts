@@ -9,6 +9,10 @@ interface DatabaseServiceType {
   saveSubscriptions<T>(subscriptions: T[]): Promise<void>;
   addSubscription<T>(subscription: T): Promise<void>;
   removeSubscriptionById(id: string): Promise<void>;
+  updateSubscriptionById<T extends { id: string }>(
+    id: string,
+    updatedSubscription: T,
+  ): Promise<void>;
 }
 
 /**
@@ -95,6 +99,25 @@ const DatabaseService: DatabaseServiceType = {
     const subscriptions = await this.getSubscriptions<{ id: string }>();
     const filteredSubscriptions = subscriptions.filter((sub) => sub.id !== id);
     await this.saveSubscriptions(filteredSubscriptions);
+  },
+
+  /**
+   * Update a subscription by ID
+   * @param id The ID of the subscription to update
+   * @param updatedSubscription The updated subscription data
+   * @returns A promise that resolves when the operation is complete
+   */
+  async updateSubscriptionById<T extends { id: string }>(
+    id: string,
+    updatedSubscription: T,
+  ): Promise<void> {
+    const subscriptions = await this.getSubscriptions<T>();
+    const index = subscriptions.findIndex((sub) => sub.id === id);
+
+    if (index !== -1) {
+      subscriptions[index] = updatedSubscription;
+      await this.saveSubscriptions(subscriptions);
+    }
   },
 };
 

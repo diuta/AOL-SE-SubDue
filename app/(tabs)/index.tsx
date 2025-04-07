@@ -11,11 +11,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DatabaseService from "@/utils/DatabaseService";
+import { formatCurrency } from "@/utils/formatUtils";
 
 interface Subscription {
   id: string;
   appName: string;
-  price: Int16Array;
+  price: string;
   subscriptionDate: string;
   dueDate: string;
   billing: string;
@@ -77,7 +78,9 @@ export default function SubscriptionList() {
               <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.appName}>{subscription.appName}</Text>
-                  <Text style={styles.price}>Rp.{subscription.price},-</Text>
+                  <Text style={styles.price}>
+                    {formatCurrency(parseFloat(subscription.price))}
+                  </Text>
                 </View>
                 <View style={styles.cardDetails}>
                   <View style={styles.detailRow}>
@@ -190,7 +193,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   price: {
-    color: "#4649E5",
+    color: "#00C853",
     fontSize: 16,
     fontWeight: "bold",
   },

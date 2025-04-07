@@ -24,6 +24,7 @@ import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DatabaseService from "@/utils/DatabaseService";
 import DatePicker from "@/components/DatePicker";
+import { formatCurrency } from "@/utils/formatUtils";
 
 type Subscription = {
   id: string;
@@ -316,7 +317,12 @@ export default function AddSubscription() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Subscription Date <Text style={styles.autoFilledNote}>(Auto-filled with today)</Text></Text>
+            <Text style={styles.label}>
+              Subscription Date{" "}
+              <Text style={styles.autoFilledNote}>
+                (Auto-filled with today)
+              </Text>
+            </Text>
             <DatePicker
               value={subscriptionDate}
               onChange={setSubscriptionDate}
@@ -552,7 +558,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   currencyPrefix: {
-    color: "#FFFFFF",
+    color: "#00C853",
     fontSize: 16,
     marginRight: 4,
   },
@@ -614,7 +620,7 @@ const styles = StyleSheet.create({
   dueDate: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#4649E5",
+    color: "#00C853",
   },
   buttonContainer: {
     flexDirection: "row",

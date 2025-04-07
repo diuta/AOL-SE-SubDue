@@ -37,6 +37,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="Analytics"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <Ionicons
+                size={24}
+                name={focused ? "analytics" : "analytics-outline"}
+                color={focused ? "#FFFFFF" : "#66667A"}
+              />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="AddSubscription"
         options={{
           tabBarIcon: ({ focused }) => (

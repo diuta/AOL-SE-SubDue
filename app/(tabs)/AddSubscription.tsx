@@ -32,6 +32,7 @@ type Subscription = {
   subscriptionDate: string;
   dueDate: string;
   billing: string;
+  category?: string;
 };
 
 type ValidationErrors = {
@@ -49,6 +50,7 @@ export default function AddSubscription() {
   const [subscriptionDate, setSubscriptionDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [billing, setBilling] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [isWeb, setIsWeb] = useState<boolean>(Platform.OS === "web");
   const [slideAnim] = useState(new Animated.Value(100));
@@ -85,6 +87,7 @@ export default function AddSubscription() {
       setSubscriptionDate(new Date());
       setDueDate(new Date());
       setBilling("");
+      setCategory("");
       setErrors({});
       setTouched({
         appName: false,
@@ -225,6 +228,7 @@ export default function AddSubscription() {
       subscriptionDate: formattedDate,
       dueDate: formattedDueDate,
       billing,
+      category: category || undefined,
     };
 
     try {
@@ -264,10 +268,15 @@ export default function AddSubscription() {
             <Text style={styles.subtitle}>
               Enter the details of your subscription
             </Text>
+            <Text style={styles.requiredNote}>
+              <Text style={styles.requiredIndicator}>*</Text> Required fields
+            </Text>
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>App Name</Text>
+            <Text style={styles.label}>
+              App Name <Text style={styles.requiredIndicator}>*</Text>
+            </Text>
             <TextInput
               style={[
                 styles.input,
@@ -284,7 +293,9 @@ export default function AddSubscription() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Price</Text>
+            <Text style={styles.label}>
+              Price <Text style={styles.requiredIndicator}>*</Text>
+            </Text>
             <View style={styles.priceInputContainer}>
               <Text style={styles.currencyPrefix}>Rp.</Text>
               <TextInput
@@ -305,7 +316,7 @@ export default function AddSubscription() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Subscription Date</Text>
+            <Text style={styles.label}>Subscription Date <Text style={styles.autoFilledNote}>(Auto-filled with today)</Text></Text>
             <DatePicker
               value={subscriptionDate}
               onChange={setSubscriptionDate}
@@ -313,7 +324,9 @@ export default function AddSubscription() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Billing Cycle</Text>
+            <Text style={styles.label}>
+              Billing Cycle <Text style={styles.requiredIndicator}>*</Text>
+            </Text>
             {Platform.OS === "ios" ? (
               <TouchableOpacity
                 style={[
@@ -365,6 +378,37 @@ export default function AddSubscription() {
             {touched.billing && errors.billing && (
               <Text style={styles.errorText}>{errors.billing}</Text>
             )}
+          </View>
+
+          {/* Category Selection */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Category (Optional)</Text>
+            <View style={styles.pickerContainer}>
+              <RNPickerSelect
+                onValueChange={setCategory}
+                value={category}
+                placeholder={{ label: "Select a category", value: "" }}
+                items={[
+                  { label: "Entertainment", value: "Entertainment" },
+                  { label: "Productivity", value: "Productivity" },
+                  { label: "Utilities", value: "Utilities" },
+                  { label: "Social Media", value: "Social Media" },
+                  { label: "Gaming", value: "Gaming" },
+                  { label: "Education", value: "Education" },
+                  { label: "Health & Fitness", value: "Health & Fitness" },
+                  { label: "Other", value: "Other" },
+                ]}
+                style={{
+                  inputIOS: styles.pickerText,
+                  inputAndroid: styles.pickerText,
+                  placeholder: styles.placeholderText,
+                }}
+                useNativeAndroidPickerStyle={false}
+                Icon={() => (
+                  <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
+                )}
+              />
+            </View>
           </View>
 
           <View style={styles.dueDateContainer}>
@@ -465,6 +509,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
+    color: "#9D9DB5",
+    marginBottom: 4,
+  },
+  requiredNote: {
+    fontSize: 14,
     color: "#9D9DB5",
   },
   formGroup: {
@@ -638,5 +687,14 @@ const styles = StyleSheet.create({
   },
   iosDatePicker: {
     height: 200,
+  },
+  requiredIndicator: {
+    color: "#FF4D4F",
+    fontWeight: "bold",
+  },
+  autoFilledNote: {
+    fontSize: 13,
+    color: "#9D9DB5",
+    fontWeight: "normal",
   },
 });

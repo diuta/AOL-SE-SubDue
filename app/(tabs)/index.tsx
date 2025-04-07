@@ -19,6 +19,7 @@ interface Subscription {
   subscriptionDate: string;
   dueDate: string;
   billing: string;
+  category?: string;
 }
 
 export default function SubscriptionList() {
@@ -90,6 +91,19 @@ export default function SubscriptionList() {
                       Due: {subscription.dueDate} ({subscription.billing})
                     </Text>
                   </View>
+                  {subscription.category && (
+                    <View style={styles.detailRow}>
+                      <Ionicons
+                        name="pricetag"
+                        size={16}
+                        color="#4649E5"
+                        style={styles.icon}
+                      />
+                      <Text style={styles.detailText}>
+                        {subscription.category}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
               <View style={styles.buttonContainer}>

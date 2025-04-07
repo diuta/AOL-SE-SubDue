@@ -14,9 +14,8 @@ interface Subscription {
 }
 
 export default function SubscriptionList() {
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
 
-  const[subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  
   useEffect(() => {
     loadSubscriptions();
   }, []);
@@ -31,18 +30,23 @@ export default function SubscriptionList() {
   useFocusEffect(
     useCallback(() => {
       loadSubscriptions();
-    }, [])
+    }, []),
   );
-  
+
   return (
     <View style={styles.mainView}>
       <Text style={styles.header}>Subscriptions</Text>
       {subscriptions.map((subscription) => (
         <View key={subscription.id} style={styles.subscriptionCard}>
-          <Text>App   :  {subscription.appName}</Text>
-          <Text>Price :  Rp.{subscription.price},-</Text>
-          <Text>Due   :  {subscription.dueDate} ({subscription.billing})</Text>
-          <RemoveSubscriptionButton id={subscription.id} onUpdate={loadSubscriptions} />
+          <Text>App : {subscription.appName}</Text>
+          <Text>Price : Rp.{subscription.price},-</Text>
+          <Text>
+            Due : {subscription.dueDate} ({subscription.billing})
+          </Text>
+          <RemoveSubscriptionButton
+            id={subscription.id}
+            onUpdate={loadSubscriptions}
+          />
         </View>
       ))}
     </View>
@@ -60,8 +64,8 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     fontSize: 20,
-    marginTop: '10%',
-    marginBottom: '10%',
+    marginTop: "10%",
+    marginBottom: "10%",
     fontWeight: "bold",
   },
   subscriptionCard: {

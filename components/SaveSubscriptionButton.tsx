@@ -15,24 +15,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
   },
   text: {
-    color: 'black',
-    textAlign: 'center',
-    fontWeight: 'bold',
+    color: "black",
+    textAlign: "center",
+    fontWeight: "bold",
   },
-  button:{
+  button: {
     marginTop: 70,
-    backgroundColor: 'skyblue',
+    backgroundColor: "skyblue",
     height: 50,
-    width: '20%',
+    width: "20%",
     borderRadius: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
     padding: 10,
     marginBottom: 10,
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

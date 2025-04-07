@@ -6,6 +6,7 @@ import {
   Animated,
   Alert,
   View,
+  Platform,
 } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
@@ -44,31 +45,65 @@ export default function RemoveSubscriptionButton({
   };
 
   const removeSubscription = async () => {
-    Alert.alert(
-      "Remove Subscription",
-      "Are you sure you want to remove this subscription?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await DatabaseService.removeSubscriptionById(id);
-              onUpdate();
-            } catch (error) {
-              console.error("Error removing subscription:", error);
-            }
+    if (Platform.OS === "web") {
+      // For web, use browser's native confirm dialog
+      const isConfirmed = window.confirm(
+        "Are you sure you want to remove this subscription?",
+      );
+
+      if (isConfirmed) {
+        try {
+          await DatabaseService.removeSubscriptionById(id);
+          onUpdate();
+        } catch (error) {
+          console.error("Error removing subscription:", error);
+        }
+      }
+    } else {
+      // For native platforms, use Alert.alert
+      Alert.alert(
+        "Remove Subscription",
+        "Are you sure you want to remove this subscription?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
           },
-        },
-      ],
-    );
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await DatabaseService.removeSubscriptionById(id);
+                onUpdate();
+              } catch (error) {
+                console.error("Error removing subscription:", error);
+              }
+            },
+          },
+        ],
+      );
+    }
   };
 
-  // Use Animated.createAnimatedComponent to create an animated TouchableOpacity
+  // Use conditional rendering based on platform
+  if (Platform.OS === "web") {
+    // On web, use regular TouchableOpacity without animations
+    return (
+      <TouchableOpacity
+        style={styles.button}
+        activeOpacity={0.7}
+        onPress={removeSubscription}
+      >
+        <View style={styles.iconContainer}>
+          <Ionicons name="trash-outline" size={16} color="#FF4D4F" />
+        </View>
+        <Text style={styles.buttonText}>Remove</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  // For native platforms, use the animated version
   const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
   return (
@@ -85,11 +120,7 @@ export default function RemoveSubscriptionButton({
       onPressOut={handlePressOut}
     >
       <View style={styles.iconContainer}>
-        <Ionicons
-          name="trash-outline"
-          size={16}
-          color="#FF4D4F"
-        />
+        <Ionicons name="trash-outline" size={16} color="#FF4D4F" />
       </View>
       <Text style={styles.buttonText}>Remove</Text>
     </AnimatedTouchable>

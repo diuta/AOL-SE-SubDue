@@ -9,12 +9,12 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: "#050511",
-          height: Platform.OS === 'ios' ? 88 : 72,
+          height: Platform.OS === "ios" ? 88 : 72,
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
           paddingTop: 10,
-          paddingBottom: Platform.OS === 'ios' ? 30 : 16,
+          paddingBottom: Platform.OS === "ios" ? 30 : 16,
           paddingHorizontal: 30,
         },
         tabBarActiveTintColor: "#FFFFFF",
@@ -40,12 +40,14 @@ export default function TabsLayout() {
         name="AddSubscription"
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabButton, styles.addButton, focused && styles.addButtonActive]}>
-              <Ionicons
-                size={24}
-                name="add"
-                color="#FFFFFF"
-              />
+            <View
+              style={[
+                styles.tabButton,
+                styles.addButton,
+                focused && styles.addButtonActive,
+              ]}
+            >
+              <Ionicons size={24} name="add" color="#FFFFFF" />
             </View>
           ),
         }}

@@ -23,6 +23,7 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DatabaseService from "@/utils/DatabaseService";
+import DatePicker from "@/components/DatePicker";
 
 type Subscription = {
   id: string;
@@ -62,7 +63,7 @@ export default function AddSubscription() {
   });
 
   useEffect(() => {
-    // Animation on component mount
+    // Animation on component moun
     Animated.parallel([
       Animated.timing(slideAnim, {
         toValue: 0,
@@ -141,7 +142,7 @@ export default function AddSubscription() {
   };
 
   const handlePriceChange = (value: string) => {
-    // Allow only numbers and decimal point
+    // Allow only numbers and decimal poin
     if (value === "" || /^\d+(\.\d*)?$/.test(value)) {
       setPrice(value);
       setTouched((prev) => ({ ...prev, price: true }));
@@ -260,7 +261,9 @@ export default function AddSubscription() {
         >
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Add Subscription</Text>
-            <Text style={styles.subtitle}>Enter the details of your subscription</Text>
+            <Text style={styles.subtitle}>
+              Enter the details of your subscription
+            </Text>
           </View>
 
           <View style={styles.formGroup}>
@@ -303,15 +306,10 @@ export default function AddSubscription() {
 
           <View style={styles.formGroup}>
             <Text style={styles.label}>Subscription Date</Text>
-            <TouchableOpacity
-              style={styles.datePickerButton}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Ionicons name="calendar" size={20} color="#4649E5" style={styles.dateIcon} />
-              <Text style={styles.dateText}>
-                {format(subscriptionDate, "MMMM d, yyyy")}
-              </Text>
-            </TouchableOpacity>
+            <DatePicker
+              value={subscriptionDate}
+              onChange={setSubscriptionDate}
+            />
           </View>
 
           <View style={styles.formGroup}>
@@ -322,9 +320,16 @@ export default function AddSubscription() {
                   styles.pickerContainer,
                   touched.billing && errors.billing ? styles.inputError : null,
                 ]}
-                onPress={() => {/* Show iOS picker modal */}}
+                onPress={() => {
+                  /* Show iOS picker modal */
+                }}
               >
-                <Text style={[styles.pickerText, !billing && styles.placeholderText]}>
+                <Text
+                  style={[
+                    styles.pickerText,
+                    !billing && styles.placeholderText,
+                  ]}
+                >
                   {billing || "Select billing cycle"}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
@@ -351,7 +356,9 @@ export default function AddSubscription() {
                     placeholder: styles.placeholderText,
                   }}
                   useNativeAndroidPickerStyle={false}
-                  Icon={() => <Ionicons name="chevron-down" size={20} color="#9D9DB5" />}
+                  Icon={() => (
+                    <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
+                  )}
                 />
               </View>
             )}
@@ -399,7 +406,11 @@ export default function AddSubscription() {
                 </TouchableOpacity>
                 <Text style={styles.modalHeaderTitle}>Select Date</Text>
                 <TouchableOpacity onPress={handleCloseDatePicker}>
-                  <Text style={[styles.modalHeaderButton, { color: "#4649E5" }]}>Done</Text>
+                  <Text
+                    style={[styles.modalHeaderButton, { color: "#4649E5" }]}
+                  >
+                    Done
+                  </Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker

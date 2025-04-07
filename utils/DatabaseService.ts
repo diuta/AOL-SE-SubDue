@@ -92,12 +92,10 @@ const DatabaseService: DatabaseServiceType = {
    * @returns A promise that resolves when the operation is complete
    */
   async removeSubscriptionById(id: string): Promise<void> {
-    const subscriptions = await this.getSubscriptions<{id: string}>();
-    const filteredSubscriptions = subscriptions.filter(
-      (sub) => sub.id !== id
-    );
+    const subscriptions = await this.getSubscriptions<{ id: string }>();
+    const filteredSubscriptions = subscriptions.filter((sub) => sub.id !== id);
     await this.saveSubscriptions(filteredSubscriptions);
-  }
+  },
 };
 
-export default DatabaseService; 
+export default DatabaseService;

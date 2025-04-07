@@ -1,7 +1,14 @@
 import RemoveSubscriptionButton from "@/components/RemoveSubscriptionButton";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, StatusBar } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DatabaseService from "@/utils/DatabaseService";
 
@@ -23,7 +30,8 @@ export default function SubscriptionList() {
 
   const loadSubscriptions = async () => {
     try {
-      const subscriptions = await DatabaseService.getSubscriptions<Subscription>();
+      const subscriptions =
+        await DatabaseService.getSubscriptions<Subscription>();
       setSubscriptions(subscriptions);
     } catch (error) {
       console.error("Error loading subscriptions:", error);
@@ -43,11 +51,12 @@ export default function SubscriptionList() {
         <Text style={styles.header}>Subscriptions</Text>
         {subscriptions.length > 0 && (
           <Text style={styles.subHeader}>
-            {subscriptions.length} active {subscriptions.length === 1 ? 'subscription' : 'subscriptions'}
+            {subscriptions.length} active{" "}
+            {subscriptions.length === 1 ? "subscription" : "subscriptions"}
           </Text>
         )}
       </View>
-      
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -57,7 +66,9 @@ export default function SubscriptionList() {
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={60} color="#4649E5" />
             <Text style={styles.emptyStateText}>No subscriptions yet</Text>
-            <Text style={styles.emptyStateSubText}>Add your first subscription to get started</Text>
+            <Text style={styles.emptyStateSubText}>
+              Add your first subscription to get started
+            </Text>
           </View>
         ) : (
           subscriptions.map((subscription) => (
@@ -69,7 +80,12 @@ export default function SubscriptionList() {
                 </View>
                 <View style={styles.cardDetails}>
                   <View style={styles.detailRow}>
-                    <Ionicons name="calendar" size={16} color="#4649E5" style={styles.icon} />
+                    <Ionicons
+                      name="calendar"
+                      size={16}
+                      color="#4649E5"
+                      style={styles.icon}
+                    />
                     <Text style={styles.detailText}>
                       Due: {subscription.dueDate} ({subscription.billing})
                     </Text>

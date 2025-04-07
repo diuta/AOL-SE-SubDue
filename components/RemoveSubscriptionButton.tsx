@@ -5,11 +5,12 @@ import {
   StyleSheet,
   Animated,
   Alert,
+  View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import DatabaseService from "@/utils/DatabaseService";
 
 interface RemoveSubscriptionButtonProps {
   id: string;
@@ -55,23 +56,12 @@ export default function RemoveSubscriptionButton({
           text: "Remove",
           style: "destructive",
           onPress: async () => {
-            const storedData = await AsyncStorage.getItem("subscriptions");
-            console.log("clicked");
-            if (!storedData) {
-              console.log("Stored data not available");
-              return;
+            try {
+              await DatabaseService.removeSubscriptionById(id);
+              onUpdate();
+            } catch (error) {
+              console.error("Error removing subscription:", error);
             }
-
-            const subscriptions: { id: string }[] = JSON.parse(storedData);
-            const filteredSubscriptions = subscriptions.filter(
-              (sub: { id: string }) => sub.id !== id,
-            );
-
-            await AsyncStorage.setItem(
-              "subscriptions",
-              JSON.stringify(filteredSubscriptions),
-            );
-            onUpdate();
           },
         },
       ],
@@ -79,7 +69,6 @@ export default function RemoveSubscriptionButton({
   };
 
   // Use Animated.createAnimatedComponent to create an animated TouchableOpacity
-  // This avoids the nested structure that might interfere with touch events
   const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
   return (
@@ -87,7 +76,6 @@ export default function RemoveSubscriptionButton({
       style={[
         styles.button,
         {
-          backgroundColor: colors.danger,
           transform: [{ scale: scaleAnim }],
         },
       ]}
@@ -96,12 +84,13 @@ export default function RemoveSubscriptionButton({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >
-      <Ionicons
-        name="trash-outline"
-        size={14}
-        color="#FFF"
-        style={styles.icon}
-      />
+      <View style={styles.iconContainer}>
+        <Ionicons
+          name="trash-outline"
+          size={16}
+          color="#FF4D4F"
+        />
+      </View>
       <Text style={styles.buttonText}>Remove</Text>
     </AnimatedTouchable>
   );
@@ -111,21 +100,21 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: "rgba(255, 77, 79, 0.1)",
   },
-  icon: {
+  iconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 6,
   },
   buttonText: {
-    color: "#FFF",
+    color: "#FF4D4F",
     fontSize: 14,
     fontWeight: "600",
   },

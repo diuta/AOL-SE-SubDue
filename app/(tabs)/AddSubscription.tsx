@@ -11,7 +11,6 @@ import {
   Modal,
 } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -23,6 +22,7 @@ import { addDays, addMonths, addYears, format } from "date-fns";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import DatabaseService from "@/utils/DatabaseService";
 
 type Subscription = {
   id: string;
@@ -37,33 +37,6 @@ type ValidationErrors = {
   appName?: string;
   price?: string;
   billing?: string;
-};
-
-// Database service for cross-platform storage
-const DatabaseService = {
-  async getItem(key: string): Promise<string | null> {
-    if (Platform.OS === "web") {
-      return localStorage.getItem(key);
-    } else {
-      return await AsyncStorage.getItem(key);
-    }
-  },
-
-  async setItem(key: string, value: string): Promise<void> {
-    if (Platform.OS === "web") {
-      localStorage.setItem(key, value);
-    } else {
-      await AsyncStorage.setItem(key, value);
-    }
-  },
-
-  async removeItem(key: string): Promise<void> {
-    if (Platform.OS === "web") {
-      localStorage.removeItem(key);
-    } else {
-      await AsyncStorage.removeItem(key);
-    }
-  },
 };
 
 export default function AddSubscription() {
@@ -254,13 +227,7 @@ export default function AddSubscription() {
     };
 
     try {
-      const storedData = await DatabaseService.getItem("subscriptions");
-      const subscriptions = storedData ? JSON.parse(storedData) : [];
-      subscriptions.push(newSubscription);
-      await DatabaseService.setItem(
-        "subscriptions",
-        JSON.stringify(subscriptions),
-      );
+      await DatabaseService.addSubscription(newSubscription);
       router.replace("/");
     } catch (error) {
       console.error("Error saving subscription:", error);
@@ -275,335 +242,187 @@ export default function AddSubscription() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={styles.container}
     >
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleCancel}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerText, { color: colors.text }]}>
-          Add Subscription
-        </Text>
-      </View>
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View
           style={[
-            styles.mainView,
+            styles.formContainer,
             {
-              opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
+              opacity: fadeAnim,
             },
           ]}
         >
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>Add Subscription</Text>
+            <Text style={styles.subtitle}>Enter the details of your subscription</Text>
+          </View>
+
           <View style={styles.formGroup}>
-            <Text style={[styles.subheader, { color: colors.text }]}>
-              App Name
-            </Text>
-            <View style={styles.inputContainer}>
-              <Ionicons
-                name="apps"
-                size={22}
-                color={colors.primary}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor:
-                      touched.appName && errors.appName
-                        ? colors.danger
-                        : colors.cardBorder,
-                    color: colors.text,
-                  },
-                ]}
-                onChangeText={handleAppNameChange}
-                value={appName}
-                placeholder="Enter app name"
-                placeholderTextColor={colors.textSecondary}
-              />
-            </View>
+            <Text style={styles.label}>App Name</Text>
+            <TextInput
+              style={[
+                styles.input,
+                touched.appName && errors.appName ? styles.inputError : null,
+              ]}
+              placeholder="Enter app name"
+              placeholderTextColor="#9D9DB5"
+              value={appName}
+              onChangeText={handleAppNameChange}
+            />
             {touched.appName && errors.appName && (
-              <Text style={[styles.errorText, { color: colors.danger }]}>
-                {errors.appName}
-              </Text>
+              <Text style={styles.errorText}>{errors.appName}</Text>
             )}
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={[styles.subheader, { color: colors.text }]}>
-              Price
-            </Text>
-            <View style={styles.inputContainer}>
-              <Ionicons
-                name="cash-outline"
-                size={22}
-                color={colors.primary}
-                style={styles.inputIcon}
-              />
+            <Text style={styles.label}>Price</Text>
+            <View style={styles.priceInputContainer}>
+              <Text style={styles.currencyPrefix}>Rp.</Text>
               <TextInput
                 style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor:
-                      touched.price && errors.price
-                        ? colors.danger
-                        : colors.cardBorder,
-                    color: colors.text,
-                  },
+                  styles.priceInput,
+                  touched.price && errors.price ? styles.inputError : null,
                 ]}
-                onChangeText={handlePriceChange}
-                value={price}
+                placeholder="0"
+                placeholderTextColor="#9D9DB5"
                 keyboardType="numeric"
-                placeholder="Enter price"
-                placeholderTextColor={colors.textSecondary}
+                value={price}
+                onChangeText={handlePriceChange}
               />
             </View>
             {touched.price && errors.price && (
-              <Text style={[styles.errorText, { color: colors.danger }]}>
-                {errors.price}
-              </Text>
+              <Text style={styles.errorText}>{errors.price}</Text>
             )}
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={[styles.subheader, { color: colors.text }]}>
-              Subscription Start Date
-            </Text>
+            <Text style={styles.label}>Subscription Date</Text>
             <TouchableOpacity
+              style={styles.datePickerButton}
               onPress={() => setShowDatePicker(true)}
-              style={[
-                styles.selectButton,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.cardBorder,
-                },
-              ]}
             >
-              <Ionicons
-                name="calendar-outline"
-                size={22}
-                color={colors.primary}
-                style={styles.inputIcon}
-              />
-              <Text style={{ color: colors.text }}>
-                {format(subscriptionDate, "EEEE, MMMM d, yyyy")}
+              <Ionicons name="calendar" size={20} color="#4649E5" style={styles.dateIcon} />
+              <Text style={styles.dateText}>
+                {format(subscriptionDate, "MMMM d, yyyy")}
               </Text>
-              <View style={styles.editIconContainer}>
-                <Ionicons
-                  name="create-outline"
-                  size={18}
-                  color={colors.primary}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Billing Cycle</Text>
+            {Platform.OS === "ios" ? (
+              <TouchableOpacity
+                style={[
+                  styles.pickerContainer,
+                  touched.billing && errors.billing ? styles.inputError : null,
+                ]}
+                onPress={() => {/* Show iOS picker modal */}}
+              >
+                <Text style={[styles.pickerText, !billing && styles.placeholderText]}>
+                  {billing || "Select billing cycle"}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={[
+                  styles.pickerContainer,
+                  touched.billing && errors.billing ? styles.inputError : null,
+                ]}
+              >
+                <RNPickerSelect
+                  onValueChange={handleBillingChange}
+                  value={billing}
+                  placeholder={{ label: "Select billing cycle", value: "" }}
+                  items={[
+                    { label: "Daily", value: "Daily" },
+                    { label: "Monthly", value: "Monthly" },
+                    { label: "Yearly", value: "Yearly" },
+                  ]}
+                  style={{
+                    inputIOS: styles.pickerText,
+                    inputAndroid: styles.pickerText,
+                    placeholder: styles.placeholderText,
+                  }}
+                  useNativeAndroidPickerStyle={false}
+                  Icon={() => <Ionicons name="chevron-down" size={20} color="#9D9DB5" />}
                 />
               </View>
-            </TouchableOpacity>
-
-            {Platform.OS === "android" && showDatePicker && (
-              <DateTimePicker
-                value={subscriptionDate}
-                mode="date"
-                display="default"
-                onChange={handleDateChange}
-              />
             )}
-
-            {Platform.OS === "ios" && (
-              <Modal
-                transparent={true}
-                animationType="slide"
-                visible={showDatePicker}
-                onRequestClose={handleCloseDatePicker}
-              >
-                <View style={styles.modalContainer}>
-                  <View
-                    style={[
-                      styles.datePickerContainer,
-                      { backgroundColor: colors.card },
-                    ]}
-                  >
-                    <View style={styles.datePickerHeader}>
-                      <Text
-                        style={[styles.datePickerTitle, { color: colors.text }]}
-                      >
-                        Select Start Date
-                      </Text>
-                      <TouchableOpacity onPress={handleCloseDatePicker}>
-                        <Text
-                          style={{
-                            color: colors.primary,
-                            fontSize: 16,
-                            fontWeight: "600",
-                          }}
-                        >
-                          Done
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <DateTimePicker
-                      value={subscriptionDate}
-                      mode="date"
-                      display="spinner"
-                      onChange={handleDateChange}
-                      style={{ height: 200 }}
-                      textColor={colors.text}
-                    />
-                  </View>
-                </View>
-              </Modal>
-            )}
-
-            {Platform.OS === "web" && showDatePicker && (
-              <Modal
-                transparent={true}
-                animationType="slide"
-                visible={showDatePicker}
-                onRequestClose={handleCloseDatePicker}
-              >
-                <View style={styles.modalContainer}>
-                  <View
-                    style={[
-                      styles.datePickerContainer,
-                      { backgroundColor: colors.card },
-                    ]}
-                  >
-                    <View style={styles.datePickerHeader}>
-                      <Text
-                        style={[styles.datePickerTitle, { color: colors.text }]}
-                      >
-                        Select Start Date
-                      </Text>
-                      <TouchableOpacity onPress={handleCloseDatePicker}>
-                        <Text
-                          style={{
-                            color: colors.primary,
-                            fontSize: 16,
-                            fontWeight: "600",
-                          }}
-                        >
-                          Done
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View style={styles.webDatePickerContainer}>
-                      <input
-                        type="date"
-                        value={format(subscriptionDate, "yyyy-MM-dd")}
-                        onChange={(e) => {
-                          const newDate = new Date(e.target.value);
-                          setSubscriptionDate(newDate);
-                          updateDueDate(newDate, billing);
-                        }}
-                        style={{
-                          width: "100%",
-                          padding: 12,
-                          fontSize: 16,
-                          borderRadius: 8,
-                          border: `1px solid ${colors.cardBorder}`,
-                          backgroundColor: colors.background,
-                          color: colors.text,
-                        }}
-                      />
-                    </View>
-                  </View>
-                </View>
-              </Modal>
-            )}
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={[styles.subheader, { color: colors.text }]}>
-              Billing Cycle
-            </Text>
-            <View
-              style={[
-                styles.selectButton,
-                {
-                  backgroundColor: colors.card,
-                  borderColor:
-                    touched.billing && errors.billing
-                      ? colors.danger
-                      : colors.cardBorder,
-                },
-              ]}
-            >
-              <Ionicons
-                name="repeat-outline"
-                size={22}
-                color={colors.primary}
-                style={styles.inputIcon}
-              />
-              <RNPickerSelect
-                onValueChange={handleBillingChange}
-                value={billing}
-                placeholder={{ label: "Select billing cycle", value: "" }}
-                style={{
-                  inputIOS: {
-                    color: colors.text,
-                    paddingVertical: 12,
-                    paddingHorizontal: 10,
-                    width: "100%",
-                  },
-                  inputAndroid: { color: colors.text, width: "100%" },
-                }}
-                items={[
-                  { label: "Daily", value: "Daily" },
-                  { label: "Monthly", value: "Monthly" },
-                  { label: "Yearly", value: "Yearly" },
-                ]}
-              />
-            </View>
             {touched.billing && errors.billing && (
-              <Text style={[styles.errorText, { color: colors.danger }]}>
-                {errors.billing}
-              </Text>
+              <Text style={styles.errorText}>{errors.billing}</Text>
             )}
           </View>
 
-          {billing && (
-            <View style={styles.dueContainer}>
-              <Text style={[styles.dueLabel, { color: colors.textSecondary }]}>
-                Next payment due on:
-              </Text>
-              <Text style={[styles.dueDate, { color: colors.primary }]}>
-                {formattedDueDate}
-              </Text>
-            </View>
-          )}
+          <View style={styles.dueDateContainer}>
+            <Text style={styles.dueLabel}>Next payment due:</Text>
+            <Text style={styles.dueDate}>
+              {format(dueDate, "MMMM d, yyyy")}
+            </Text>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancel}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={saveSubscription}
+            >
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       </ScrollView>
 
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity
-          onPress={handleCancel}
-          style={[styles.cancelButton, { borderColor: colors.primary }]}
+      {/* Date picker modal for iOS */}
+      {Platform.OS === "ios" && showDatePicker && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showDatePicker}
         >
-          <Text style={[styles.cancelButtonText, { color: colors.primary }]}>
-            Cancel
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={saveSubscription}
-          style={[
-            styles.saveButton,
-            {
-              backgroundColor:
-                Object.keys(errors).length > 0 || !appName || !price || !billing
-                  ? colors.textSecondary // Disabled state color
-                  : colors.primary,
-            },
-          ]}
-          disabled={
-            Object.keys(errors).length > 0 || !appName || !price || !billing
-          }
-        >
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={handleCloseDatePicker}>
+                  <Text style={styles.modalHeaderButton}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.modalHeaderTitle}>Select Date</Text>
+                <TouchableOpacity onPress={handleCloseDatePicker}>
+                  <Text style={[styles.modalHeaderButton, { color: "#4649E5" }]}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={subscriptionDate}
+                mode="date"
+                display="spinner"
+                onChange={handleDateChange}
+                style={styles.iosDatePicker}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Date picker for Android */}
+      {Platform.OS === "android" && showDatePicker && (
+        <DateTimePicker
+          value={subscriptionDate}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -611,169 +430,202 @@ export default function AddSubscription() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#050511",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  headerText: {
-    fontSize: 28,
-    fontWeight: "bold",
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 100,
+    paddingBottom: 30,
   },
-  mainView: {
+  formContainer: {
     flex: 1,
     padding: 20,
   },
+  headerContainer: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#9D9DB5",
+  },
   formGroup: {
-    marginBottom: 25,
+    marginBottom: 20,
   },
-  subheader: {
-    marginBottom: 10,
+  label: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "500",
+    color: "#FFFFFF",
+    marginBottom: 8,
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  input: {
+    backgroundColor: "#1A1A2E",
     borderRadius: 12,
-    overflow: "hidden",
-  },
-  inputIcon: {
-    position: "absolute",
-    zIndex: 1,
-    left: 15,
-  },
-  textInput: {
-    flex: 1,
-    height: 56,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 46,
+    padding: 16,
+    color: "#FFFFFF",
     fontSize: 16,
-  },
-  selectButton: {
-    height: 56,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingLeft: 46,
-    paddingRight: 46,
-    justifyContent: "center",
-    position: "relative",
+    borderColor: "#2D2D44",
   },
-  editIconContainer: {
-    position: "absolute",
-    right: 15,
-    backgroundColor: "rgba(108, 92, 231, 0.1)",
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
+  inputError: {
+    borderColor: "#FF4D4F",
   },
   errorText: {
-    fontSize: 12,
-    marginTop: 5,
-    marginLeft: 5,
+    color: "#FF4D4F",
+    fontSize: 14,
+    marginTop: 6,
   },
-  dueContainer: {
-    marginTop: 20,
-    padding: 16,
+  priceInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A1A2E",
     borderRadius: 12,
     borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#E2E8F0",
+    borderColor: "#2D2D44",
+    paddingHorizontal: 16,
+  },
+  currencyPrefix: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    marginRight: 4,
+  },
+  priceInput: {
+    flex: 1,
+    padding: 16,
+    color: "#FFFFFF",
+    fontSize: 16,
+    borderWidth: 0,
+  },
+  datePickerButton: {
+    flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+  },
+  dateIcon: {
+    marginRight: 10,
+  },
+  dateText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  pickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+  },
+  pickerText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    flex: 1,
+  },
+  placeholderText: {
+    color: "#9D9DB5",
+  },
+  dueDateContainer: {
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 10,
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
   },
   dueLabel: {
     fontSize: 14,
-    marginBottom: 8,
+    color: "#9D9DB5",
+    marginBottom: 4,
   },
   dueDate: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#4649E5",
   },
-  buttonsContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
+  buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "transparent",
+    marginTop: 10,
   },
   cancelButton: {
-    height: 56,
     flex: 1,
-    marginRight: 10,
-    borderRadius: 12,
+    backgroundColor: "transparent",
     borderWidth: 1,
-    justifyContent: "center",
+    borderColor: "#4649E5",
+    borderRadius: 12,
+    padding: 16,
+    marginRight: 10,
     alignItems: "center",
   },
   cancelButtonText: {
+    color: "#4649E5",
     fontSize: 16,
     fontWeight: "600",
   },
   saveButton: {
-    height: 56,
     flex: 1,
-    marginLeft: 10,
+    backgroundColor: "#4649E5",
     borderRadius: 12,
-    justifyContent: "center",
+    padding: 16,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
   },
   saveButtonText: {
-    color: "white",
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
-  modalContainer: {
+  centeredView: {
     flex: 1,
     justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  datePickerContainer: {
-    padding: 16,
+  modalView: {
+    backgroundColor: "#1A1A2E",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  datePickerHeader: {
+  modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2D2D44",
   },
-  datePickerTitle: {
-    fontSize: 18,
+  modalHeaderButton: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    padding: 4,
+  },
+  modalHeaderTitle: {
+    fontSize: 16,
     fontWeight: "600",
+    color: "#FFFFFF",
   },
-  saveButtonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    backgroundColor: "transparent",
-  },
-  webDatePickerContainer: {
-    padding: 10,
-    alignItems: "center",
+  iosDatePicker: {
+    height: 200,
   },
 });

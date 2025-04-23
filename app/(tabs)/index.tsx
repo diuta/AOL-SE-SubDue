@@ -1,75 +1,262 @@
 import RemoveSubscriptionButton from "@/components/RemoveSubscriptionButton";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import EditSubscriptionButton from "@/components/EditSubscriptionButton";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import DatabaseService from "@/utils/DatabaseService";
+import { formatCurrency } from "@/utils/formatUtils";
+
+// Define valid icon names
+const VALID_ICONS = [
+  "cart-outline",
+  "calendar-outline",
+  "tv-outline",
+  "analytics-outline",
+  "book-outline",
+  "barbell-outline",
+  "cloud-outline",
+  "film-outline",
+  "heart-outline",
+  "pricetag-outline",
+  "star-outline",
+  "apps-outline",
+  "cash-outline",
+  "laptop-outline",
+  "gift-outline",
+  "home-outline",
+] as const;
+
+type IconName = (typeof VALID_ICONS)[number];
 
 interface Subscription {
   id: string;
   appName: string;
-  price: Int16Array;
+  price: string;
   subscriptionDate: string;
   dueDate: string;
   billing: string;
+  category?: string;
+  icon?: IconName;
 }
 
 export default function SubscriptionList() {
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
 
-  const[subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  
   useEffect(() => {
     loadSubscriptions();
   }, []);
 
   const loadSubscriptions = async () => {
-    const storedData = await AsyncStorage.getItem("subscriptions");
-    if (!storedData) return;
-    const subscriptions: Subscription[] = JSON.parse(storedData);
-    setSubscriptions(subscriptions);
+    try {
+      const subscriptions =
+        await DatabaseService.getSubscriptions<Subscription>();
+      setSubscriptions(subscriptions);
+    } catch (error) {
+      console.error("Error loading subscriptions:", error);
+    }
   };
 
   useFocusEffect(
     useCallback(() => {
       loadSubscriptions();
-    }, [])
+    }, []),
   );
-  
+
   return (
-    <View style={styles.mainView}>
-      <Text style={styles.header}>Subscriptions</Text>
-      {subscriptions.map((subscription) => (
-        <View key={subscription.id} style={styles.subscriptionCard}>
-          <Text>App   :  {subscription.appName}</Text>
-          <Text>Price :  Rp.{subscription.price},-</Text>
-          <Text>Due   :  {subscription.dueDate} ({subscription.billing})</Text>
-          <RemoveSubscriptionButton id={subscription.id} onUpdate={loadSubscriptions} />
-        </View>
-      ))}
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor="#050511" />
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Subscriptions</Text>
+        {subscriptions.length > 0 && (
+          <Text style={styles.subHeader}>
+            {subscriptions.length} active{" "}
+            {subscriptions.length === 1 ? "subscription" : "subscriptions"}
+          </Text>
+        )}
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {subscriptions.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="calendar-outline" size={60} color="#4649E5" />
+            <Text style={styles.emptyStateText}>No subscriptions yet</Text>
+            <Text style={styles.emptyStateSubText}>
+              Add your first subscription to get started
+            </Text>
+          </View>
+        ) : (
+          subscriptions.map((subscription) => (
+            <View key={subscription.id} style={styles.subscriptionCard}>
+              <View style={styles.cardContent}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.appNameContainer}>
+                    {subscription.icon && (
+                      <Ionicons
+                        name={subscription.icon.replace("-outline", "") as any}
+                        size={20}
+                        color="#4649E5"
+                        style={styles.appIcon}
+                      />
+                    )}
+                    <Text style={styles.appName}>{subscription.appName}</Text>
+                  </View>
+                  <Text style={styles.price}>
+                    {formatCurrency(parseFloat(subscription.price))}
+                  </Text>
+                </View>
+                <View style={styles.cardDetails}>
+                  <View style={styles.detailRow}>
+                    <Ionicons
+                      name="calendar"
+                      size={16}
+                      color="#4649E5"
+                      style={styles.icon}
+                    />
+                    <Text style={styles.detailText}>
+                      Due: {subscription.dueDate} ({subscription.billing})
+                    </Text>
+                  </View>
+                  {subscription.category && (
+                    <View style={styles.detailRow}>
+                      <Ionicons
+                        name="pricetag"
+                        size={16}
+                        color="#4649E5"
+                        style={styles.icon}
+                      />
+                      <Text style={styles.detailText}>
+                        {subscription.category}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              <View style={styles.buttonContainer}>
+                <EditSubscriptionButton id={subscription.id} />
+                <RemoveSubscriptionButton
+                  id={subscription.id}
+                  onUpdate={loadSubscriptions}
+                />
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  mainView: {
-    width: "100%",
-    height: "100%",
+  safeArea: {
+    flex: 1,
     backgroundColor: "#050511",
-    alignItems: "center",
+  },
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   header: {
     color: "white",
-    textAlign: "center",
-    fontSize: 20,
-    marginTop: '10%',
-    marginBottom: '10%',
+    fontSize: 28,
     fontWeight: "bold",
+    marginBottom: 4,
+  },
+  subHeader: {
+    color: "#9D9DB5",
+    fontSize: 14,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 100,
+  },
+  emptyStateText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 16,
+  },
+  emptyStateSubText: {
+    color: "#9D9DB5",
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: "center",
   },
   subscriptionCard: {
-    backgroundColor: "#f9f9f9",
-    padding: 15,
-    marginVertical: 10,
-    borderRadius: 10,
-    elevation: 3,
-    width: "90%",
+    backgroundColor: "#1A1A2E",
+    borderRadius: 16,
+    marginVertical: 8,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardContent: {
+    flex: 1,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  appNameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  appIcon: {
+    marginRight: 8,
+  },
+  appName: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  price: {
+    color: "#00C853",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  cardDetails: {
+    marginBottom: 8,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  icon: {
+    marginRight: 8,
+  },
+  detailText: {
+    color: "#9D9DB5",
+    fontSize: 14,
+  },
+  buttonContainer: {
+    marginTop: 12,
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
 });

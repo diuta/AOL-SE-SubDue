@@ -1,13 +1,52 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Animated,
+  KeyboardAvoidingView,
+  ScrollView,
+  Modal,
+} from "react-native";
 import { TextInput } from "react-native-gesture-handler";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
-import { useFocusEffect, useRouter } from "expo-router";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import RNPickerSelect from 'react-native-picker-select';
-import { addDays, addMonths, addYears, format } from "date-fns";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import RNPickerSelect from "react-native-picker-select";
+import { addDays, addMonths, addYears, format, parse } from "date-fns";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import DatabaseService from "@/utils/DatabaseService";
+import DatePicker from "@/components/DatePicker";
+import { formatCurrency } from "@/utils/formatUtils";
+
+// Define valid icon names
+const VALID_ICONS = [
+  "cart-outline",
+  "calendar-outline",
+  "tv-outline",
+  "analytics-outline",
+  "book-outline",
+  "barbell-outline",
+  "cloud-outline",
+  "film-outline",
+  "heart-outline",
+  "pricetag-outline",
+  "star-outline",
+  "apps-outline",
+  "cash-outline",
+  "laptop-outline",
+  "gift-outline",
+  "home-outline",
+] as const;
+
+type IconName = (typeof VALID_ICONS)[number];
 
 type Subscription = {
   id: string;
@@ -16,166 +55,800 @@ type Subscription = {
   subscriptionDate: string;
   dueDate: string;
   billing: string;
+  category?: string;
+  icon?: string;
+};
+
+type ValidationErrors = {
+  appName?: string;
+  price?: string;
+  billing?: string;
 };
 
 export default function AddSubscription() {
-  
+  const colorScheme = useColorScheme() || "light";
+  const colors = Colors[colorScheme];
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const subscriptionId = params.id as string;
+  const isEditMode = !!subscriptionId && subscriptionId.trim() !== "";
+
   const [appName, setAppName] = useState<string>("");
   const [price, setPrice] = useState<string>("");
   const [subscriptionDate, setSubscriptionDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [billing, setBilling] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
+  const [icon, setIcon] = useState<IconName | "">("");
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [isWeb, setIsWeb] = useState<boolean>(Platform.OS === "web");
+  const [slideAnim] = useState(new Animated.Value(100));
+  const [fadeAnim] = useState(new Animated.Value(0));
+
+  // Form validation
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState({
+    appName: false,
+    price: false,
+    billing: false,
+  });
+
+  useEffect(() => {
+    // Animation on component moun
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // If in edit mode, load the subscription data
+    if (isEditMode) {
+      loadSubscriptionData();
+    }
+  }, []);
+
+  const loadSubscriptionData = async () => {
+    try {
+      const subscriptions =
+        await DatabaseService.getSubscriptions<Subscription>();
+      const subscription = subscriptions.find(
+        (sub) => sub.id === subscriptionId,
+      );
+
+      if (subscription) {
+        setAppName(subscription.appName);
+        setPrice(subscription.price);
+
+        // Parse the date strings to Date objects
+        const parsedSubscriptionDate = parse(
+          subscription.subscriptionDate,
+          "dd MMMM yyyy",
+          new Date(),
+        );
+        setSubscriptionDate(parsedSubscriptionDate);
+
+        const parsedDueDate = parse(
+          subscription.dueDate,
+          "dd MMMM yyyy",
+          new Date(),
+        );
+        setDueDate(parsedDueDate);
+
+        setBilling(subscription.billing);
+        setCategory(subscription.category || "");
+        setIcon((subscription.icon as IconName) || "");
+      }
+    } catch (error) {
+      console.error("Error loading subscription:", error);
+    }
+  };
 
   useFocusEffect(
     React.useCallback(() => {
-      setAppName("");
-      setPrice("");
-      setSubscriptionDate(new Date());
-      setDueDate(new Date());
-      setBilling("");
-    }, [])
+      // Only reset form if not in edit mode
+      if (!isEditMode) {
+        setAppName("");
+        setPrice("");
+        setSubscriptionDate(new Date());
+        setDueDate(new Date());
+        setBilling("");
+        setCategory("");
+        setIcon("");
+        setErrors({});
+        setTouched({
+          appName: false,
+          price: false,
+          billing: false,
+        });
+      } else {
+        // Reload data when focusing in edit mode
+        loadSubscriptionData();
+      }
+    }, [isEditMode]),
   );
 
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    // Hide the picker after selection
-    setShowDatePicker(false);
+  // Update the due date whenever subscription date or billing changes
+  const updateDueDate = (date: Date, billingCycle: string) => {
+    let newDueDate = date;
+    if (billingCycle === "Daily") {
+      newDueDate = addDays(date, 1);
+    } else if (billingCycle === "Monthly") {
+      newDueDate = addMonths(date, 1);
+    } else if (billingCycle === "Yearly") {
+      newDueDate = addYears(date, 1);
+    }
+    setDueDate(newDueDate);
+  };
+
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    // For Android, we need to hide the picker after selection
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+
     if (selectedDate) {
       setSubscriptionDate(selectedDate);
-
-      let newDueDate = selectedDate;
-      if (billing === "Daily") {
-        newDueDate = addDays(selectedDate, 1);
-      } else if (billing === "Monthly") {
-        newDueDate = addMonths(selectedDate, 1);
-      } else if (billing === "Yearly") {
-        newDueDate = addYears(selectedDate, 1);
-      }
-
-      setDueDate(newDueDate);
+      // Update the due date based on the selected date and current billing cycle
+      updateDueDate(selectedDate, billing);
     }
+  };
+
+  const handleCloseDatePicker = () => {
+    setShowDatePicker(false);
   };
 
   const handleBillingChange = (value: string) => {
     setBilling(value);
-  
-    let newDueDate = subscriptionDate;
-    if (value === "Daily") {
-      newDueDate = addDays(subscriptionDate, 1);
-    } else if (value === "Monthly") {
-      newDueDate = addMonths(subscriptionDate, 1);
-    } else if (value === "Yearly") {
-      newDueDate = addYears(subscriptionDate, 1);
+    setTouched((prev) => ({ ...prev, billing: true }));
+    validateField("billing", value);
+    // Update the due date based on the current subscription date and new billing cycle
+    updateDueDate(subscriptionDate, value);
+  };
+
+  const handleAppNameChange = (value: string) => {
+    setAppName(value);
+    setTouched((prev) => ({ ...prev, appName: true }));
+    validateField("appName", value);
+  };
+
+  const handlePriceChange = (value: string) => {
+    // Allow only numbers and decimal poin
+    if (value === "" || /^\d+(\.\d*)?$/.test(value)) {
+      setPrice(value);
+      setTouched((prev) => ({ ...prev, price: true }));
+      validateField("price", value);
     }
-    
-    setDueDate(newDueDate);
+  };
+
+  const validateField = (field: string, value: string) => {
+    let newErrors = { ...errors };
+
+    switch (field) {
+      case "appName":
+        if (!value.trim()) {
+          newErrors.appName = "App name is required";
+        } else {
+          delete newErrors.appName;
+        }
+        break;
+      case "price":
+        if (!value.trim()) {
+          newErrors.price = "Price is required";
+        } else if (parseFloat(value) <= 0) {
+          newErrors.price = "Price must be greater than zero";
+        } else {
+          delete newErrors.price;
+        }
+        break;
+      case "billing":
+        if (!value) {
+          newErrors.billing = "Please select a billing cycle";
+        } else {
+          delete newErrors.billing;
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateForm = () => {
+    const newErrors: ValidationErrors = {};
+
+    if (!appName.trim()) {
+      newErrors.appName = "App name is required";
+    }
+
+    if (!price.trim()) {
+      newErrors.price = "Price is required";
+    } else if (parseFloat(price) <= 0) {
+      newErrors.price = "Price must be greater than zero";
+    }
+
+    if (!billing) {
+      newErrors.billing = "Please select a billing cycle";
+    }
+
+    setErrors(newErrors);
+    setTouched({
+      appName: true,
+      price: true,
+      billing: true,
+    });
+
+    return Object.keys(newErrors).length === 0;
   };
 
   const formattedDate = format(subscriptionDate, "dd MMMM yyyy");
   const formattedDueDate = format(dueDate, "dd MMMM yyyy");
 
   const saveSubscription = async () => {
-    const newSubscription: Subscription = {
-      id: uuidv4(),
+    if (!validateForm()) {
+      return;
+    }
+
+    const subscriptionData: Subscription = {
+      id: isEditMode ? subscriptionId : uuidv4(),
       appName,
       price,
       subscriptionDate: formattedDate,
       dueDate: formattedDueDate,
       billing,
+      category: category || undefined,
+      icon: icon || undefined,
     };
 
-    const storedData = await AsyncStorage.getItem("subscriptions");
-    const subscriptions = storedData ? JSON.parse(storedData) : [];
-    subscriptions.push(newSubscription);
-    await AsyncStorage.setItem("subscriptions", JSON.stringify(subscriptions));
-    router.replace("/");
+    try {
+      if (isEditMode) {
+        await DatabaseService.updateSubscriptionById(
+          subscriptionId,
+          subscriptionData,
+        );
+      } else {
+        await DatabaseService.addSubscription(subscriptionData);
+      }
+      router.replace("/");
+    } catch (error) {
+      console.error(
+        `Error ${isEditMode ? "updating" : "saving"} subscription:`,
+        error,
+      );
+      // You could add error handling UI here
+    }
+  };
+
+  const handleCancel = () => {
+    router.back();
   };
 
   return (
-    <View style={styles.mainView}>
-      <Text style={styles.subheader}>App Name</Text>
-      <TextInput style={styles.textInput} onChangeText={setAppName} value={appName} />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          style={[
+            styles.formContainer,
+            {
+              transform: [{ translateY: slideAnim }],
+              opacity: fadeAnim,
+            },
+          ]}
+        >
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>
+              {isEditMode ? "Edit" : "Add"} Subscription
+            </Text>
+            <Text style={styles.subtitle}>
+              {isEditMode ? "Update" : "Enter"} the details of your subscription
+            </Text>
+            <Text style={styles.requiredNote}>
+              <Text style={styles.requiredIndicator}>*</Text> Required fields
+            </Text>
+          </View>
 
-      <Text style={styles.subheader}>Price</Text>
-      <TextInput style={styles.textInput} onChangeText={setPrice} value={price} keyboardType="numeric" />
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>
+              App Name <Text style={styles.requiredIndicator}>*</Text>
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                touched.appName && errors.appName ? styles.inputError : null,
+              ]}
+              placeholder="Enter app name"
+              placeholderTextColor="#9D9DB5"
+              value={appName}
+              onChangeText={handleAppNameChange}
+            />
+            {touched.appName && errors.appName && (
+              <Text style={styles.errorText}>{errors.appName}</Text>
+            )}
+          </View>
 
-      <Text style={styles.subheader}>Subscription Date</Text>
-      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.selectButton} >
-        <Text>{subscriptionDate.toDateString()}</Text>
-      </TouchableOpacity>
-      {showDatePicker && ( <DateTimePicker value={subscriptionDate} mode="date" display={Platform.OS === "android" ? "spinner" : "default"} onChange={handleDateChange} />)}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>
+              Price <Text style={styles.requiredIndicator}>*</Text>
+            </Text>
+            <View style={styles.priceInputContainer}>
+              <Text style={styles.currencyPrefix}>Rp.</Text>
+              <TextInput
+                style={[
+                  styles.priceInput,
+                  touched.price && errors.price ? styles.inputError : null,
+                ]}
+                placeholder="0"
+                placeholderTextColor="#9D9DB5"
+                keyboardType="numeric"
+                value={price}
+                onChangeText={handlePriceChange}
+              />
+            </View>
+            {touched.price && errors.price && (
+              <Text style={styles.errorText}>{errors.price}</Text>
+            )}
+          </View>
 
-      <Text style={styles.subheader}>Billing</Text>
-      <View style={styles.selectButton} >
-        <RNPickerSelect onValueChange={handleBillingChange} value={billing} items={[
-          { label: 'Daily', value: 'Daily' },
-          { label: 'Monthly', value: 'Monthly' },
-          { label: 'Yearly', value: 'Yearly' }, ]} />
-      </View>
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>
+              Subscription Date{" "}
+              {!isEditMode && (
+                <Text style={styles.autoFilledNote}>
+                  (Auto-filled with today)
+                </Text>
+              )}
+            </Text>
+            <DatePicker
+              value={subscriptionDate}
+              onChange={setSubscriptionDate}
+            />
+          </View>
 
-      <View style={styles.saveButtonContainer}>
-        <TouchableOpacity onPress={saveSubscription} style={styles.saveButton}>
-          <Text style={styles.text}>Save</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>
+              Billing Cycle <Text style={styles.requiredIndicator}>*</Text>
+            </Text>
+            {Platform.OS === "ios" ? (
+              <TouchableOpacity
+                style={[
+                  styles.pickerContainer,
+                  touched.billing && errors.billing ? styles.inputError : null,
+                ]}
+                onPress={() => {
+                  /* Show iOS picker modal */
+                }}
+              >
+                <Text
+                  style={[
+                    styles.pickerText,
+                    !billing && styles.placeholderText,
+                  ]}
+                >
+                  {billing || "Select billing cycle"}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={[
+                  styles.pickerContainer,
+                  touched.billing && errors.billing ? styles.inputError : null,
+                ]}
+              >
+                <RNPickerSelect
+                  onValueChange={handleBillingChange}
+                  value={billing}
+                  placeholder={{ label: "Select billing cycle", value: "" }}
+                  items={[
+                    { label: "Daily", value: "Daily" },
+                    { label: "Monthly", value: "Monthly" },
+                    { label: "Yearly", value: "Yearly" },
+                  ]}
+                  style={{
+                    inputIOS: styles.pickerText,
+                    inputAndroid: styles.pickerText,
+                    placeholder: styles.placeholderText,
+                  }}
+                  useNativeAndroidPickerStyle={false}
+                  Icon={() => (
+                    <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
+                  )}
+                />
+              </View>
+            )}
+            {touched.billing && errors.billing && (
+              <Text style={styles.errorText}>{errors.billing}</Text>
+            )}
+          </View>
 
-    </View>
+          {/* Category Selection */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Category (Optional)</Text>
+            <View style={styles.pickerContainer}>
+              <RNPickerSelect
+                onValueChange={setCategory}
+                value={category}
+                placeholder={{ label: "Select a category", value: "" }}
+                items={[
+                  { label: "Entertainment", value: "Entertainment" },
+                  { label: "Productivity", value: "Productivity" },
+                  { label: "Utilities", value: "Utilities" },
+                  { label: "Social Media", value: "Social Media" },
+                  { label: "Gaming", value: "Gaming" },
+                  { label: "Education", value: "Education" },
+                  { label: "Health & Fitness", value: "Health & Fitness" },
+                  { label: "Other", value: "Other" },
+                ]}
+                style={{
+                  inputIOS: styles.pickerText,
+                  inputAndroid: styles.pickerText,
+                  placeholder: styles.placeholderText,
+                }}
+                useNativeAndroidPickerStyle={false}
+                Icon={() => (
+                  <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
+                )}
+              />
+            </View>
+          </View>
+
+          {/* Icon Selection */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Icon (Optional)</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.iconScrollView}
+            >
+              <View style={styles.iconPickerContainer}>
+                {VALID_ICONS.map((iconName) => (
+                  <TouchableOpacity
+                    key={iconName}
+                    style={[
+                      styles.iconOption,
+                      icon === iconName && styles.selectedIconOption,
+                    ]}
+                    onPress={() => setIcon(iconName)}
+                  >
+                    <Ionicons
+                      name={
+                        icon === iconName
+                          ? (iconName.replace("-outline", "") as any)
+                          : iconName
+                      }
+                      size={24}
+                      color={icon === iconName ? "#FFFFFF" : "#9D9DB5"}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
+          <View style={styles.dueDateContainer}>
+            <Text style={styles.dueLabel}>Next payment due:</Text>
+            <Text style={styles.dueDate}>
+              {format(dueDate, "MMMM d, yyyy")}
+            </Text>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancel}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={saveSubscription}
+            >
+              <Text style={styles.saveButtonText}>
+                {isEditMode ? "Update" : "Save"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </ScrollView>
+
+      {/* Date picker modal for iOS */}
+      {Platform.OS === "ios" && showDatePicker && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showDatePicker}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={handleCloseDatePicker}>
+                  <Text style={styles.modalHeaderButton}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.modalHeaderTitle}>Select Date</Text>
+                <TouchableOpacity onPress={handleCloseDatePicker}>
+                  <Text
+                    style={[styles.modalHeaderButton, { color: "#4649E5" }]}
+                  >
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={subscriptionDate}
+                mode="date"
+                display="spinner"
+                onChange={handleDateChange}
+                style={styles.iosDatePicker}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Date picker for Android */}
+      {Platform.OS === "android" && showDatePicker && (
+        <DateTimePicker
+          value={subscriptionDate}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+        />
+      )}
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  mainView: {
+  container: {
     flex: 1,
     backgroundColor: "#050511",
-    alignItems: "center",
-    justifyContent: "center",
   },
-  subheader: {
-    color: "white",
-    marginBottom: 10,
-    fontSize: 20,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 30,
+  },
+  formContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  headerContainer: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#9D9DB5",
+    marginBottom: 4,
+  },
+  requiredNote: {
+    fontSize: 14,
+    color: "#9D9DB5",
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#FFFFFF",
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 16,
+    color: "#FFFFFF",
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+  },
+  inputError: {
+    borderColor: "#FF4D4F",
+  },
+  errorText: {
+    color: "#FF4D4F",
+    fontSize: 14,
+    marginTop: 6,
+  },
+  priceInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+    paddingHorizontal: 16,
+  },
+  currencyPrefix: {
+    color: "#00C853",
+    fontSize: 16,
+    marginRight: 4,
+  },
+  priceInput: {
+    flex: 1,
+    padding: 16,
+    color: "#FFFFFF",
+    fontSize: 16,
+    borderWidth: 0,
+  },
+  datePickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+  },
+  dateIcon: {
+    marginRight: 10,
+  },
+  dateText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  pickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+  },
+  pickerText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    flex: 1,
+  },
+  placeholderText: {
+    color: "#9D9DB5",
+  },
+  dueDateContainer: {
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 10,
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+  },
+  dueLabel: {
+    fontSize: 14,
+    color: "#9D9DB5",
+    marginBottom: 4,
+  },
+  dueDate: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#00C853",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#4649E5",
+    borderRadius: 12,
+    padding: 16,
+    marginRight: 10,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#4649E5",
+    fontSize: 16,
     fontWeight: "600",
   },
-  textInput: {
-    backgroundColor: "white",
-    width: "60%",
-    height: 50,
-    borderColor: "gray",
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 13,
-    marginBottom: 30,
-  },
-  selectButton: {
-    backgroundColor: "white",
-    width: "60%",
-    height: 50,
-    borderColor: "gray",
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 13,
-    marginBottom: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  saveButtonContainer: {
-    position: "absolute",
-    bottom: 20,
-    width: "100%",
-    paddingHorizontal: 20,
-  },
   saveButton: {
+    flex: 1,
     backgroundColor: "#4649E5",
-    height: 50,
-    width: "100%",
-    borderRadius: 10,
-    justifyContent: "center",
+    borderRadius: 12,
+    padding: 16,
     alignItems: "center",
   },
-  text: {
-    color: "white",
-    fontSize: 15,
-    fontWeight: 'bold',
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalView: {
+    backgroundColor: "#1A1A2E",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2D2D44",
+  },
+  modalHeaderButton: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    padding: 4,
+  },
+  modalHeaderTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  iosDatePicker: {
+    height: 200,
+  },
+  requiredIndicator: {
+    color: "#FF4D4F",
+    fontWeight: "bold",
+  },
+  autoFilledNote: {
+    fontSize: 13,
+    color: "#9D9DB5",
+    fontWeight: "normal",
+  },
+  iconPickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    backgroundColor: "#1A1A2E",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#2D2D44",
+  },
+  iconOption: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#1A1A2E",
+    marginHorizontal: 6,
+  },
+  selectedIconOption: {
+    backgroundColor: "#4649E5",
+  },
+  iconScrollView: {
+    flexDirection: "row",
   },
 });

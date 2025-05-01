@@ -58,7 +58,7 @@ export default function Analytics() {
   useFocusEffect(
     React.useCallback(() => {
       loadSubscriptions();
-    }, []),
+    }, [])
   );
 
   const loadSubscriptions = async () => {
@@ -114,7 +114,9 @@ export default function Analytics() {
         value,
         color: categoryColors[name as keyof typeof categoryColors] || "#CCCCCC",
         legendFontColor: "#FFFFFF",
-      }),
+        strokeWidth: 2,
+        strokeColor: "#1A1A2E",
+      })
     );
 
     setCategorySpending(categoryData);
@@ -180,7 +182,7 @@ export default function Analytics() {
             const dueDateParts = sub.dueDate.split(" ");
             if (dueDateParts.length >= 2) {
               const dueMonth = months.findIndex((m) =>
-                dueDateParts[1].toLowerCase().startsWith(m.toLowerCase()),
+                dueDateParts[1].toLowerCase().startsWith(m.toLowerCase())
               );
 
               if (dueMonth !== -1) {
@@ -254,6 +256,10 @@ export default function Analytics() {
                 paddingLeft="0"
                 absolute
                 hasLegend={false}
+                style={{
+                  strokeWidth: 3,
+                  stroke: "#1A1A2E",
+                }}
               />
 
               <View style={styles.categoryLegend}>
@@ -268,7 +274,7 @@ export default function Analytics() {
                     <Text style={styles.legendText}>
                       {category.name} (
                       {((category.value / totalMonthlySpending) * 100).toFixed(
-                        0,
+                        0
                       )}
                       %):{" "}
                       <Text style={{ color: "#00C853" }}>
@@ -348,7 +354,7 @@ export default function Analytics() {
                   {formatChartNumber(
                     projectionData.datasets[0].data.reduce((a, b) => a + b, 0) /
                       12,
-                    true,
+                    true
                   )}
                 </Text>
               </View>
@@ -407,7 +413,7 @@ export default function Analytics() {
                     projectionData.cumulativeData[
                       projectionData.cumulativeData.length - 1
                     ],
-                    true,
+                    true
                   )}
                 </Text>
               </View>
@@ -427,7 +433,7 @@ export default function Analytics() {
                     <Text style={styles.monthAmount}>
                       {formatChartNumber(
                         projectionData.datasets[0].data[index],
-                        true,
+                        true
                       )}
                     </Text>
                   </View>
@@ -458,7 +464,7 @@ export default function Analytics() {
               labels: categorySpending.map((cat) =>
                 cat.name.length > 10
                   ? cat.name.substring(0, 10) + "..."
-                  : cat.name,
+                  : cat.name
               ),
               datasets: [
                 {

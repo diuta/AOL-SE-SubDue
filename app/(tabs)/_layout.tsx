@@ -53,6 +53,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="Recommendations"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <Ionicons
+                size={24}
+                name={focused ? "star" : "star-outline"}
+                color={focused ? "#FFFFFF" : "#66667A"}
+              />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="AddSubscription"
         listeners={{
           tabPress: (e) => {

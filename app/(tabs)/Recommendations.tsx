@@ -20,28 +20,28 @@ const recommendedApps = {
       price: "$15.49/month",
       rating: 4.8,
       website: "https://www.netflix.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+      logo: require("../../assets/images/netflix_logo.png"),
     },
     {
       name: "Disney+",
       price: "$7.99/month",
       rating: 4.7,
       website: "https://www.disneyplus.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
+      logo: require("../../assets/images/DisneyPlus_Logo.png"),
     },
     {
       name: "HBO Max",
       price: "$14.99/month",
       rating: 4.6,
       website: "https://www.hbomax.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg",
+      logo: require("../../assets/images/hbomax_logo.png"),
     },
     {
       name: "Prime Video",
       price: "$8.99/month",
       rating: 4.5,
       website: "https://www.primevideo.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg",
+      logo: require("../../assets/images/PrimeVideo_logo.png"),
     },
   ],
   Entertainment: [
@@ -50,28 +50,28 @@ const recommendedApps = {
       price: "$9.99/month",
       rating: 4.8,
       website: "https://www.spotify.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
+      logo: require("../../assets/images/spotify_logo.png"),
     },
     {
       name: "Apple Music",
       price: "$9.99/month",
       rating: 4.7,
       website: "https://www.apple.com/apple-music/",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+      logo: require("../../assets/images/Apple_Logo.png"),
     },
     {
       name: "YouTube Music",
       price: "$9.99/month",
       rating: 4.6,
       website: "https://music.youtube.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg",
+      logo: require("../../assets/images/youtube_logo.png"),
     },
     {
       name: "Tidal",
       price: "$9.99/month",
       rating: 4.5,
       website: "https://tidal.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Tidal_logo.svg",
+      logo: require("../../assets/images/tidal_logo.png"),
     },
   ],
   "Video Editing": [
@@ -80,28 +80,28 @@ const recommendedApps = {
       price: "$20.99/month",
       rating: 4.9,
       website: "https://www.adobe.com/products/premiere.html",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/4/4b/Adobe_Premiere_Pro_CC_icon.svg",
+      logo: require("../../assets/images/Pr_Logo.png"),
     },
     {
       name: "Final Cut Pro",
       price: "$299.99/year",
       rating: 4.8,
       website: "https://www.apple.com/final-cut-pro/",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Final_Cut_Pro_icon.svg",
+      logo: require("../../assets/images/FinalCut_logo.png"),
     },
     {
       name: "DaVinci Resolve",
       price: "$295/year",
       rating: 4.7,
       website: "https://www.blackmagicdesign.com/products/davinciresolve/",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/9/90/DaVinci_Resolve_17_logo.svg",
+      logo: require("../../assets/images/Davinci_logo.png"),
     },
     {
       name: "Filmora",
       price: "$49.99/year",
       rating: 4.6,
       website: "https://filmora.wondershare.com/",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Filmora_logo.svg",
+      logo: require("../../assets/images/filmora_logo.png"),
     },
   ],
   "Photo Editing": [
@@ -110,28 +110,28 @@ const recommendedApps = {
       price: "$20.99/month",
       rating: 4.9,
       website: "https://www.adobe.com/products/photoshop.html",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/a/af/Adobe_Photoshop_CC_icon.svg",
+      logo: require("../../assets/images/photoshop_logo.png"),
     },
     {
       name: "Lightroom",
       price: "$9.99/month",
       rating: 4.8,
       website: "https://www.adobe.com/products/photoshop-lightroom.html",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/5/56/Adobe_Photoshop_Lightroom_Classic_CC_icon.svg",
+      logo: require("../../assets/images/Lightroom_Logo.png"),
     },
     {
       name: "Canva Pro",
       price: "$12.99/month",
       rating: 4.7,
       website: "https://www.canva.com/pro/",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg",
+      logo: require("../../assets/images/Canva_logo.png"),
     },
     {
       name: "Figma",
       price: "$12/month",
       rating: 4.6,
       website: "https://www.figma.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg",
+      logo: require("../../assets/images/figma_logo.png"),
     },
   ],
   "Graphic Design": [
@@ -140,28 +140,28 @@ const recommendedApps = {
       price: "$20.99/month",
       rating: 4.9,
       website: "https://www.adobe.com/products/illustrator.html",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/f/fb/Adobe_Illustrator_CC_icon.svg",
+      logo: require("../../assets/images/ai_logo.png"),
     },
     {
       name: "InDesign",
       price: "$20.99/month",
       rating: 4.8,
       website: "https://www.adobe.com/products/indesign.html",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/4/48/Adobe_InDesign_CC_icon.svg",
+      logo: require("../../assets/images/indesign_logo.png"),
     },
     {
       name: "Affinity Designer",
       price: "$54.99",
       rating: 4.7,
       website: "https://affinity.serif.com/designer/",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/4/4b/Affinity_Designer_icon.svg",
+      logo: require("../../assets/images/affinity_logo.png"),
     },
     {
       name: "CorelDRAW",
       price: "$249/year",
       rating: 4.6,
       website: "https://www.coreldraw.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/9/9f/CorelDRAW_logo.svg",
+      logo: require("../../assets/images/coreldraw_logo.png"),
     },
   ],
   Productivity: [
@@ -170,28 +170,28 @@ const recommendedApps = {
       price: "$6.99/month",
       rating: 4.8,
       website: "https://www.microsoft.com/microsoft-365",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+      logo: require("../../assets/images/Microsoft_365_logo.png"),
     },
     {
       name: "Notion",
       price: "$8/month",
       rating: 4.7,
       website: "https://www.notion.so",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
+      logo: require("../../assets/images/Notion_logo.png"),
     },
     {
       name: "Todoist",
       price: "$4/month",
       rating: 4.6,
       website: "https://todoist.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/5/5d/Todoist_logo.svg",
+      logo: require("../../assets/images/todoist_logo.png"),
     },
     {
       name: "Evernote",
       price: "$7.99/month",
       rating: 4.5,
       website: "https://evernote.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/8/8d/Evernote_logo.svg",
+      logo: require("../../assets/images/evernote_logo.png"),
     },
   ],
   "AI Tools": [
@@ -200,28 +200,28 @@ const recommendedApps = {
       price: "$20/month",
       rating: 4.9,
       website: "https://chat.openai.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
+      logo: require("../../assets/images/chatgpt_logo.png"),
     },
     {
       name: "Midjourney",
       price: "$10/month",
       rating: 4.8,
       website: "https://www.midjourney.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/5/5d/Midjourney_logo.svg",
+      logo: require("../../assets/images/midjourney_logo.png"),
     },
     {
       name: "Grammarly",
       price: "$12/month",
       rating: 4.7,
       website: "https://www.grammarly.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/3/34/Grammarly_logo.svg",
+      logo: require("../../assets/images/grammarly_logo.png"),
     },
     {
       name: "Copy.ai",
       price: "$49/month",
       rating: 4.6,
       website: "https://www.copy.ai",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/9/9c/Copy.ai_logo.svg",
+      logo: require("../../assets/images/copyai_logo.png"),
     },
   ],
   "Development Tools": [
@@ -230,28 +230,28 @@ const recommendedApps = {
       price: "$4/month",
       rating: 4.9,
       website: "https://github.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg",
+      logo: require("../../assets/images/Github_logo.png"),
     },
     {
       name: "JetBrains",
       price: "$149/year",
       rating: 4.8,
       website: "https://www.jetbrains.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/1/1a/JetBrains_Logo_2016.svg",
+      logo: require("../../assets/images/jetbrains_logo.png"),
     },
     {
       name: "VS Code",
       price: "Free",
       rating: 4.7,
       website: "https://code.visualstudio.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/9/9a/Visual_Studio_Code_1.35_icon.svg",
+      logo: require("../../assets/images/VSCode_Logo.png"),
     },
     {
       name: "Figma",
       price: "$12/month",
       rating: 4.6,
       website: "https://www.figma.com",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg",
+      logo: require("../../assets/images/figma_logo.png"),
     },
   ],
 };
@@ -261,7 +261,7 @@ interface App {
   price: string;
   rating: number;
   website: string;
-  logo: string;
+  logo: any;
 }
 
 const RecommendationCard = ({ app }: { app: App }) => {
@@ -281,7 +281,7 @@ const RecommendationCard = ({ app }: { app: App }) => {
   return (
     <View style={styles.card}>
       <Image
-        source={{ uri: app.logo }}
+        source={app.logo}
         style={styles.appLogo}
         resizeMode="contain"
       />
@@ -420,3 +420,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+

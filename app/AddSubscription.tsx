@@ -479,9 +479,6 @@ export default function AddSubscription() {
                   placeholder: styles.placeholderText,
                 }}
                 useNativeAndroidPickerStyle={false}
-                Icon={() => (
-                  <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
-                )}
               />
             </View>
           </View>

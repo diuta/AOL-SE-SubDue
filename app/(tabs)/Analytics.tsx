@@ -76,6 +76,7 @@ export default function Analytics() {
   // Calculate statistics from subscriptions
   const calculateStats = (subscriptions: Subscription[]) => {
     if (subscriptions.length === 0) {
+      console.log('No subscriptions found');
       setTotalMonthlySpending(0);
       setCategorySpending([]);
       return;
@@ -87,7 +88,10 @@ export default function Analytics() {
 
     subscriptions.forEach((sub) => {
       const price = parseFloat(sub.price);
-      if (isNaN(price)) return;
+      if (isNaN(price)) {
+        console.log('Invalid price found for subscription:', sub);
+        return;
+      }
 
       // Convert all prices to monthly
       let monthlyPrice = price;
@@ -115,7 +119,7 @@ export default function Analytics() {
         color: categoryColors[name as keyof typeof categoryColors] || "#CCCCCC",
         legendFontColor: "#FFFFFF",
         strokeWidth: 2,
-        strokeColor: "#1A1A2E",
+        strokeColor: "#000000",
       })
     );
 
@@ -248,17 +252,21 @@ export default function Analytics() {
                 height={220}
                 chartConfig={{
                   color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) =>
-                    `rgba(255, 255, 255, ${opacity})`,
+                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                  backgroundColor: "#1A1A2E",
+                  backgroundGradientFrom: "#1A1A2E",
+                  backgroundGradientTo: "#1A1A2E",
+                  decimalPlaces: 0,
                 }}
                 accessor="value"
                 backgroundColor="transparent"
-                paddingLeft="0"
+                paddingLeft="5"
                 absolute
                 hasLegend={false}
                 style={{
-                  strokeWidth: 3,
-                  stroke: "#1A1A2E",
+                  borderWidth: 2,
+                  borderColor: "#000000",
+                  marginVertical: 8,
                 }}
               />
 
@@ -336,7 +344,6 @@ export default function Analytics() {
                   formatYLabel: (value) =>
                     formatChartNumber(parseInt(value), true),
                   count: 5,
-                  yAxisInterval: 5,
                 }}
                 fromZero
                 bezier={false}
@@ -394,7 +401,6 @@ export default function Analytics() {
                   formatYLabel: (value) =>
                     formatChartNumber(parseInt(value), true),
                   count: 5,
-                  yAxisInterval: 5,
                 }}
                 fromZero
                 bezier
@@ -673,6 +679,8 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 300,
   },
   chart: {
     borderRadius: 16,

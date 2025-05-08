@@ -119,7 +119,7 @@ export default function AddSubscription() {
       const subscriptions =
         await DatabaseService.getSubscriptions<Subscription>();
       const subscription = subscriptions.find(
-        (sub) => sub.id === subscriptionId,
+        (sub) => sub.id === subscriptionId
       );
 
       if (subscription) {
@@ -130,14 +130,14 @@ export default function AddSubscription() {
         const parsedSubscriptionDate = parse(
           subscription.subscriptionDate,
           "dd MMMM yyyy",
-          new Date(),
+          new Date()
         );
         setSubscriptionDate(parsedSubscriptionDate);
 
         const parsedDueDate = parse(
           subscription.dueDate,
           "dd MMMM yyyy",
-          new Date(),
+          new Date()
         );
         setDueDate(parsedDueDate);
 
@@ -171,7 +171,7 @@ export default function AddSubscription() {
         // Reload data when focusing in edit mode
         loadSubscriptionData();
       }
-    }, [isEditMode]),
+    }, [isEditMode])
   );
 
   // Update the due date whenever subscription date or billing changes
@@ -189,7 +189,7 @@ export default function AddSubscription() {
 
   const handleDateChange = (
     event: DateTimePickerEvent,
-    selectedDate?: Date,
+    selectedDate?: Date
   ) => {
     // For Android, we need to hide the picker after selection
     if (Platform.OS === "android") {
@@ -313,7 +313,7 @@ export default function AddSubscription() {
       if (isEditMode) {
         await DatabaseService.updateSubscriptionById(
           subscriptionId,
-          subscriptionData,
+          subscriptionData
         );
       } else {
         await DatabaseService.addSubscription(subscriptionData);
@@ -322,7 +322,7 @@ export default function AddSubscription() {
     } catch (error) {
       console.error(
         `Error ${isEditMode ? "updating" : "saving"} subscription:`,
-        error,
+        error
       );
       // You could add error handling UI here
     }
@@ -424,54 +424,32 @@ export default function AddSubscription() {
             <Text style={styles.label}>
               Billing Cycle <Text style={styles.requiredIndicator}>*</Text>
             </Text>
-            {Platform.OS === "ios" ? (
-              <TouchableOpacity
-                style={[
-                  styles.pickerContainer,
-                  touched.billing && errors.billing ? styles.inputError : null,
+            <View
+              style={[
+                styles.pickerContainer,
+                touched.billing && errors.billing ? styles.inputError : null,
+              ]}
+            >
+              <RNPickerSelect
+                onValueChange={handleBillingChange}
+                value={billing}
+                placeholder={{ label: "Select billing cycle", value: "" }}
+                items={[
+                  { label: "Daily", value: "Daily" },
+                  { label: "Monthly", value: "Monthly" },
+                  { label: "Yearly", value: "Yearly" },
                 ]}
-                onPress={() => {
-                  /* Show iOS picker modal */
+                style={{
+                  inputIOS: styles.pickerText,
+                  inputAndroid: styles.pickerText,
+                  placeholder: styles.placeholderText,
                 }}
-              >
-                <Text
-                  style={[
-                    styles.pickerText,
-                    !billing && styles.placeholderText,
-                  ]}
-                >
-                  {billing || "Select billing cycle"}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
-              </TouchableOpacity>
-            ) : (
-              <View
-                style={[
-                  styles.pickerContainer,
-                  touched.billing && errors.billing ? styles.inputError : null,
-                ]}
-              >
-                <RNPickerSelect
-                  onValueChange={handleBillingChange}
-                  value={billing}
-                  placeholder={{ label: "Select billing cycle", value: "" }}
-                  items={[
-                    { label: "Daily", value: "Daily" },
-                    { label: "Monthly", value: "Monthly" },
-                    { label: "Yearly", value: "Yearly" },
-                  ]}
-                  style={{
-                    inputIOS: styles.pickerText,
-                    inputAndroid: styles.pickerText,
-                    placeholder: styles.placeholderText,
-                  }}
-                  useNativeAndroidPickerStyle={false}
-                  Icon={() => (
-                    <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
-                  )}
-                />
-              </View>
-            )}
+                useNativeAndroidPickerStyle={false}
+                Icon={() => (
+                  <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
+                )}
+              />
+            </View>
             {touched.billing && errors.billing && (
               <Text style={styles.errorText}>{errors.billing}</Text>
             )}

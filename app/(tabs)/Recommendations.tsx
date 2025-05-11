@@ -280,11 +280,13 @@ const RecommendationCard = ({ app }: { app: App }) => {
 
   return (
     <View style={styles.card}>
-      <Image
-        source={app.logo}
-        style={styles.appLogo}
-        resizeMode="contain"
-      />
+      <View style={styles.logoContainer}>
+        <Image
+          source={app.logo}
+          style={styles.appLogo}
+          resizeMode="contain"
+        />
+      </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, styles.websiteButton]}
@@ -386,11 +388,19 @@ const styles = StyleSheet.create({
     padding: 12,
     justifyContent: "space-between",
   },
-  appLogo: {
+  logoContainer: {
     width: "100%",
     height: "70%",
-    borderRadius: 12,
     backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  appLogo: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 8,
   },
   buttonContainer: {
     flexDirection: "row",

@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter, usePathname } from "expo-router";
 import { View, StyleSheet, Platform } from "react-native";
 import FloatingAddButton from "../../components/FloatingAddButton";
 
 export default function TabsLayout() {
   const router = useRouter();
+  const pathname = usePathname();
 
   return (
     <View style={{ flex: 1 }}>
@@ -69,7 +70,9 @@ export default function TabsLayout() {
           }}
         />
       </Tabs>
-      <FloatingAddButton onPress={() => router.push({ pathname: "/AddSubscription", params: { id: "" } })} />
+      {pathname === "/" && (
+        <FloatingAddButton onPress={() => router.push({ pathname: "/AddSubscription", params: { id: "" } })} />
+      )}
     </View>
   );
 }

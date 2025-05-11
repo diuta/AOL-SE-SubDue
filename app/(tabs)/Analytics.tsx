@@ -316,55 +316,26 @@ export default function Analytics() {
       <View style={styles.tabContent}>
         {subscriptions.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Monthly Spending</Text>
+            {/* Display monthly breakdown at the top */}
+            <Text style={styles.sectionTitle}>Monthly Breakdown</Text>
             <View style={styles.chartContainer}>
-              <LineChart
-                data={{
-                  labels: projectionData.labels,
-                  datasets: projectionData.datasets,
-                }}
-                width={screenWidth}
-                height={220}
-                chartConfig={{
-                  backgroundColor: "#1A1A2E",
-                  backgroundGradientFrom: "#1A1A2E",
-                  backgroundGradientTo: "#1A1A2E",
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) =>
-                    `rgba(255, 255, 255, ${opacity})`,
-                  style: {
-                    borderRadius: 16,
-                  },
-                  propsForDots: {
-                    r: "6",
-                    strokeWidth: "2",
-                    stroke: "#4649E5",
-                  },
-                  formatYLabel: (value) =>
-                    formatChartNumber(parseInt(value), true),
-                  count: 5,
-                }}
-                fromZero
-                bezier={false}
-                style={styles.chart}
-                yLabelsOffset={10}
-                withHorizontalLines={false}
-                withVerticalLines={false}
-              />
-              <View style={styles.projectionDetails}>
-                <Text style={styles.chartLabel}>
-                  Monthly spending projection over the next year
-                </Text>
-                <Text style={styles.projectionValue}>
-                  Average monthly:{" "}
-                  {formatChartNumber(
-                    projectionData.datasets[0].data.reduce((a, b) => a + b, 0) /
-                      12,
-                    true
-                  )}
-                </Text>
-              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.monthlyBreakdownContainer}
+              >
+                {projectionData.labels.map((month, index) => (
+                  <View key={index} style={styles.monthCard}>
+                    <Text style={styles.monthName}>{month}</Text>
+                    <Text style={styles.monthAmount}>
+                      {formatChartNumber(
+                        projectionData.datasets[0].data[index],
+                        true
+                      )}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
             </View>
 
             <Text style={styles.sectionTitle}>Cumulative Spending</Text>
@@ -423,28 +394,6 @@ export default function Analytics() {
                   )}
                 </Text>
               </View>
-            </View>
-
-            {/* Display monthly breakdown */}
-            <Text style={styles.sectionTitle}>Monthly Breakdown</Text>
-            <View style={styles.chartContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.monthlyBreakdownContainer}
-              >
-                {projectionData.labels.map((month, index) => (
-                  <View key={index} style={styles.monthCard}>
-                    <Text style={styles.monthName}>{month}</Text>
-                    <Text style={styles.monthAmount}>
-                      {formatChartNumber(
-                        projectionData.datasets[0].data[index],
-                        true
-                      )}
-                    </Text>
-                  </View>
-                ))}
-              </ScrollView>
             </View>
           </>
         ) : (

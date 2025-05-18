@@ -12,6 +12,7 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DatabaseService from "@/utils/DatabaseService";
+import { MessageConstants } from "@/constants/MessageConstants";
 
 interface RemoveSubscriptionButtonProps {
   id: string;
@@ -48,7 +49,7 @@ export default function RemoveSubscriptionButton({
     if (Platform.OS === "web") {
       // For web, use browser's native confirm dialog
       const isConfirmed = window.confirm(
-        "Are you sure you want to remove this subscription?",
+        MessageConstants.REMOVE_SUBSCRIPTION_CONFIRM,
       );
 
       if (isConfirmed) {
@@ -56,14 +57,14 @@ export default function RemoveSubscriptionButton({
           await DatabaseService.removeSubscriptionById(id);
           onUpdate();
         } catch (error) {
-          console.error("Error removing subscription:", error);
+          console.error(MessageConstants.ERROR_REMOVING_SUBSCRIPTION, error);
         }
       }
     } else {
       // For native platforms, use Alert.alert
       Alert.alert(
         "Remove Subscription",
-        "Are you sure you want to remove this subscription?",
+        MessageConstants.REMOVE_SUBSCRIPTION_CONFIRM,
         [
           {
             text: "Cancel",
@@ -77,7 +78,7 @@ export default function RemoveSubscriptionButton({
                 await DatabaseService.removeSubscriptionById(id);
                 onUpdate();
               } catch (error) {
-                console.error("Error removing subscription:", error);
+                console.error(MessageConstants.ERROR_REMOVING_SUBSCRIPTION, error);
               }
             },
           },

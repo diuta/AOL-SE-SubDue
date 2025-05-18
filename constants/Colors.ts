@@ -45,3 +45,10 @@ export const Colors = {
     tabIconSelected: primaryDark,
   },
 };
+
+export const AppSpecificColors = {
+  pureBlack: "#000000",
+  pureWhite: "#FFFFFF",
+  skyBlue: "skyblue",
+  floatingButtonBlue: "#4649E5",
+} as const;

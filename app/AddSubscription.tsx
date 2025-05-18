@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Modal,
+  Image,
 } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import "react-native-get-random-values";
@@ -19,36 +20,272 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import RNPickerSelect from "react-native-picker-select";
 import { addDays, addMonths, addYears, format, parse } from "date-fns";
-import { Colors } from "@/constants/Colors";
+import { Colors, AppSpecificColors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DatabaseService from "@/utils/DatabaseService";
 import DatePicker from "@/components/DatePicker";
 import { formatCurrency } from "@/utils/formatUtils";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { Asset } from "expo-asset";
+import { defaultImages } from "@/constants/ImageConstants";
+import { VALID_ICONS, type IconName } from "@/constants/IconConstants";
+import CustomEnumPicker, { PickerItem } from "@/components/CustomEnumPicker";
 
-// Define valid icon names
-const VALID_ICONS = [
-  "cart-outline",
-  "calendar-outline",
-  "tv-outline",
-  "analytics-outline",
-  "book-outline",
-  "barbell-outline",
-  "cloud-outline",
-  "film-outline",
-  "heart-outline",
-  "pricetag-outline",
-  "star-outline",
-  "apps-outline",
-  "cash-outline",
-  "laptop-outline",
-  "gift-outline",
-  "home-outline",
-] as const;
+// Define makeStyles outside and before the component
+const makeStyles = (colors: typeof Colors.light, platformOS: typeof Platform.OS) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingBottom: 30,
+    },
+    formContainer: {
+      flex: 1,
+      padding: 24,
+    },
+    headerContainer: {
+      marginBottom: 32,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: "bold",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      marginBottom: 4,
+    },
+    requiredNote: {
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    requiredIndicator: {
+      color: colors.danger,
+    },
+    formGroup: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 20,
+      marginBottom: 24,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 12,
+    },
+    input: {
+      backgroundColor: colors.background,
+      borderRadius: 10,
+      padding: 16,
+      color: colors.text,
+      fontSize: 16,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      minHeight: 56,
+    },
+    inputError: {
+      borderColor: colors.danger,
+    },
+    errorText: {
+      color: colors.danger,
+      fontSize: 12,
+      marginTop: 4,
+    },
+    priceInputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.background,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+      paddingHorizontal: 16,
+      minHeight: 56,
+    },
+    currencyPrefix: {
+      color: colors.primary,
+      fontSize: 16,
+      fontWeight: "500",
+      marginRight: 8,
+    },
+    priceInput: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 16,
+      paddingVertical: 16,
+      paddingLeft: 0,
+    },
+    autoFilledNote: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontWeight: "normal",
+    },
+    iconScrollView: {},
+    iconPickerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 4,
+    },
+    iconOption: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      padding: 10,
+      backgroundColor: colors.background,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
+    selectedIconOption: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    imagePickerButton: {
+      backgroundColor: "transparent",
+      borderColor: colors.primary,
+      borderWidth: 1.5,
+      borderRadius: 10,
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+      alignItems: "center",
+      marginBottom: 12,
+      minHeight: 50,
+    },
+    imagePickerButtonText: {
+      color: colors.primary,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    previewImage: {
+      width: "100%",
+      height: 180,
+      borderRadius: 10,
+      marginTop: 16,
+      backgroundColor: colors.cardBorder,
+    },
+    dueDateContainer: {
+      backgroundColor: colors.background,
+      borderRadius: 10,
+      padding: 16,
+      marginTop: 16,
+      marginBottom: 24,
+      borderWidth: 1,
+      borderColor: colors.accent,
+    },
+    dueLabel: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginBottom: 4,
+    },
+    dueDate: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.accent,
+    },
+    buttonContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: 20,
+      gap: 16,
+    },
+    cancelButton: {
+      flex: 1,
+      backgroundColor: "transparent",
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      borderRadius: 10,
+      paddingVertical: 16,
+      alignItems: "center",
+      minHeight: 50,
+    },
+    cancelButtonText: {
+      color: colors.primary,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    saveButton: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+      paddingVertical: 16,
+      alignItems: "center",
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      minHeight: 50,
+    },
+    saveButtonText: {
+      color: AppSpecificColors.pureWhite,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    centeredView: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: "rgba(0, 0, 0, 0.6)",
+    },
+    modalView: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 16,
+      ...(Platform.select({
+        ios: {
+          shadowColor: AppSpecificColors.pureBlack,
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+        },
+        android: {
+          elevation: 10,
+        },
+        web: {
+          boxShadow: `0px -3px 6px rgba(0,0,0,0.1)`,
+          borderWidth: 1,
+          borderColor: 'transparent',
+        }
+      })),
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingBottom: 16,
+      paddingTop: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.cardBorder,
+    },
+    modalHeaderButton: {
+      fontSize: 16,
+      color: colors.primary,
+      padding: 8,
+      fontWeight: "500",
+    },
+    modalHeaderTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    iosDatePicker: {
+      width: "100%",
+    },
+  });
 
-type IconName = (typeof VALID_ICONS)[number];
-
-type Subscription = {
+// Export the Subscription type
+export type Subscription = {
   id: string;
   appName: string;
   price: string;
@@ -57,9 +294,11 @@ type Subscription = {
   billing: string;
   category?: string;
   icon?: string;
+  customImage?: string;
+  reminder?: string;
 };
 
-type ValidationErrors = {
+export type ValidationErrors = {
   appName?: string;
   price?: string;
   billing?: string;
@@ -72,6 +311,7 @@ export default function AddSubscription() {
   const params = useLocalSearchParams();
   const subscriptionId = params.id as string;
   const isEditMode = !!subscriptionId && subscriptionId.trim() !== "";
+  const styles = makeStyles(colors, Platform.OS);
 
   const [appName, setAppName] = useState<string>("");
   const [price, setPrice] = useState<string>("");
@@ -80,12 +320,13 @@ export default function AddSubscription() {
   const [billing, setBilling] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [icon, setIcon] = useState<IconName | "">("");
+  const [customImageUri, setCustomImageUri] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [isWeb, setIsWeb] = useState<boolean>(Platform.OS === "web");
   const [slideAnim] = useState(new Animated.Value(100));
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [reminder, setReminder] = useState<string | undefined>("none");
 
-  // Form validation
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [touched, setTouched] = useState({
     appName: false,
@@ -94,7 +335,6 @@ export default function AddSubscription() {
   });
 
   useEffect(() => {
-    // Animation on component moun
     Animated.parallel([
       Animated.timing(slideAnim, {
         toValue: 0,
@@ -108,9 +348,10 @@ export default function AddSubscription() {
       }),
     ]).start();
 
-    // If in edit mode, load the subscription data
     if (isEditMode) {
       loadSubscriptionData();
+    } else {
+      setReminder("none");
     }
   }, []);
 
@@ -125,25 +366,23 @@ export default function AddSubscription() {
       if (subscription) {
         setAppName(subscription.appName);
         setPrice(subscription.price);
-
-        // Parse the date strings to Date objects
         const parsedSubscriptionDate = parse(
           subscription.subscriptionDate,
           "dd MMMM yyyy",
           new Date()
         );
         setSubscriptionDate(parsedSubscriptionDate);
-
         const parsedDueDate = parse(
           subscription.dueDate,
           "dd MMMM yyyy",
           new Date()
         );
         setDueDate(parsedDueDate);
-
         setBilling(subscription.billing);
         setCategory(subscription.category || "");
         setIcon((subscription.icon as IconName) || "");
+        setCustomImageUri(subscription.customImage || null);
+        setReminder(subscription.reminder || "none");
       }
     } catch (error) {
       console.error("Error loading subscription:", error);
@@ -152,7 +391,6 @@ export default function AddSubscription() {
 
   useFocusEffect(
     React.useCallback(() => {
-      // Only reset form if not in edit mode
       if (!isEditMode) {
         setAppName("");
         setPrice("");
@@ -161,6 +399,8 @@ export default function AddSubscription() {
         setBilling("");
         setCategory("");
         setIcon("");
+        setCustomImageUri(null);
+        setReminder("none");
         setErrors({});
         setTouched({
           appName: false,
@@ -168,13 +408,11 @@ export default function AddSubscription() {
           billing: false,
         });
       } else {
-        // Reload data when focusing in edit mode
         loadSubscriptionData();
       }
     }, [isEditMode])
   );
 
-  // Update the due date whenever subscription date or billing changes
   const updateDueDate = (date: Date, billingCycle: string) => {
     let newDueDate = date;
     if (billingCycle === "Daily") {
@@ -191,14 +429,11 @@ export default function AddSubscription() {
     event: DateTimePickerEvent,
     selectedDate?: Date
   ) => {
-    // For Android, we need to hide the picker after selection
     if (Platform.OS === "android") {
       setShowDatePicker(false);
     }
-
     if (selectedDate) {
       setSubscriptionDate(selectedDate);
-      // Update the due date based on the selected date and current billing cycle
       updateDueDate(selectedDate, billing);
     }
   };
@@ -211,8 +446,8 @@ export default function AddSubscription() {
     setBilling(value);
     setTouched((prev) => ({ ...prev, billing: true }));
     validateField("billing", value);
-    // Update the due date based on the current subscription date and new billing cycle
     updateDueDate(subscriptionDate, value);
+    setReminder("none");
   };
 
   const handleAppNameChange = (value: string) => {
@@ -222,8 +457,7 @@ export default function AddSubscription() {
   };
 
   const handlePriceChange = (value: string) => {
-    // Allow only numbers and decimal poin
-    if (value === "" || /^\d+(\.\d*)?$/.test(value)) {
+    if (value === "" || /^\\d+(\\.\\d*)?$/.test(value)) {
       setPrice(value);
       setTouched((prev) => ({ ...prev, price: true }));
       validateField("price", value);
@@ -232,61 +466,35 @@ export default function AddSubscription() {
 
   const validateField = (field: string, value: string) => {
     let newErrors = { ...errors };
-
     switch (field) {
       case "appName":
-        if (!value.trim()) {
-          newErrors.appName = "App name is required";
-        } else {
-          delete newErrors.appName;
-        }
+        if (!value.trim()) newErrors.appName = "App name is required";
+        else delete newErrors.appName;
         break;
       case "price":
-        if (!value.trim()) {
-          newErrors.price = "Price is required";
-        } else if (parseFloat(value) <= 0) {
+        if (!value.trim()) newErrors.price = "Price is required";
+        else if (parseFloat(value) <= 0)
           newErrors.price = "Price must be greater than zero";
-        } else {
-          delete newErrors.price;
-        }
+        else delete newErrors.price;
         break;
       case "billing":
-        if (!value) {
-          newErrors.billing = "Please select a billing cycle";
-        } else {
-          delete newErrors.billing;
-        }
+        if (!value) newErrors.billing = "Please select a billing cycle";
+        else delete newErrors.billing;
         break;
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateForm = () => {
     const newErrors: ValidationErrors = {};
-
-    if (!appName.trim()) {
-      newErrors.appName = "App name is required";
-    }
-
-    if (!price.trim()) {
-      newErrors.price = "Price is required";
-    } else if (parseFloat(price) <= 0) {
+    if (!appName.trim()) newErrors.appName = "App name is required";
+    if (!price.trim()) newErrors.price = "Price is required";
+    else if (parseFloat(price) <= 0)
       newErrors.price = "Price must be greater than zero";
-    }
-
-    if (!billing) {
-      newErrors.billing = "Please select a billing cycle";
-    }
-
+    if (!billing) newErrors.billing = "Please select a billing cycle";
     setErrors(newErrors);
-    setTouched({
-      appName: true,
-      price: true,
-      billing: true,
-    });
-
+    setTouched({ appName: true, price: true, billing: true });
     return Object.keys(newErrors).length === 0;
   };
 
@@ -294,10 +502,14 @@ export default function AddSubscription() {
   const formattedDueDate = format(dueDate, "dd MMMM yyyy");
 
   const saveSubscription = async () => {
-    if (!validateForm()) {
-      return;
+    if (!validateForm()) return;
+    let imageToSave = customImageUri;
+    if (!imageToSave) {
+      const matchedDefaultImageKey = Object.keys(defaultImages).find((key) =>
+        appName.toLowerCase().includes(key.toLowerCase())
+      );
+      if (matchedDefaultImageKey) imageToSave = matchedDefaultImageKey;
     }
-
     const subscriptionData: Subscription = {
       id: isEditMode ? subscriptionId : nanoid(),
       appName,
@@ -307,29 +519,85 @@ export default function AddSubscription() {
       billing,
       category: category || undefined,
       icon: icon || undefined,
+      customImage: imageToSave || undefined,
+      reminder: reminder === "none" ? undefined : reminder,
     };
-
     try {
-      if (isEditMode) {
+      if (isEditMode)
         await DatabaseService.updateSubscriptionById(
           subscriptionId,
           subscriptionData
         );
-      } else {
-        await DatabaseService.addSubscription(subscriptionData);
-      }
+      else await DatabaseService.addSubscription(subscriptionData);
       router.replace("/");
     } catch (error) {
       console.error(
         `Error ${isEditMode ? "updating" : "saving"} subscription:`,
         error
       );
-      // You could add error handling UI here
     }
   };
 
-  const handleCancel = () => {
-    router.back();
+  const handleCancel = () => router.back();
+
+  const pickImage = async () => {
+    if (Platform.OS !== "web") {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need camera roll permissions to make this work!");
+        return;
+      }
+    }
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const selectedAsset = result.assets[0];
+      if (Platform.OS === "web") {
+        setCustomImageUri(selectedAsset.uri);
+      } else {
+        const fileName = selectedAsset.uri.split("/").pop();
+        if (FileSystem.documentDirectory && fileName) {
+          const newPath = FileSystem.documentDirectory + fileName;
+          try {
+            await FileSystem.copyAsync({ from: selectedAsset.uri, to: newPath });
+            setCustomImageUri(newPath);
+          } catch (e) {
+            console.error("Error copying image:", e);
+            alert("Failed to save image.");
+          }
+        } else {
+          console.error(
+            "Error: Document directory or filename is not available."
+          );
+          alert("Failed to save image.");
+        }
+      }
+    }
+  };
+
+  const getReminderOptions = (currentBillingCycle: string): PickerItem[] => {
+    const options: PickerItem[] = [{ label: "None", value: "none" }];
+    if (!currentBillingCycle) return options;
+
+    options.push({ label: "On due date", value: "on_due_date" });
+
+    if (currentBillingCycle === "Daily") {
+      // For Daily, perhaps only "On due date" makes sense beyond "None"
+    } else if (currentBillingCycle === "Monthly") {
+      options.push({ label: "1 day before", value: "1_day_before" });
+      options.push({ label: "3 days before", value: "3_days_before" });
+      options.push({ label: "1 week before", value: "1_week_before" });
+    } else if (currentBillingCycle === "Yearly") {
+      options.push({ label: "1 day before", value: "1_day_before" });
+      options.push({ label: "1 week before", value: "1_week_before" });
+      options.push({ label: "2 weeks before", value: "2_weeks_before" });
+      options.push({ label: "1 month before", value: "1_month_before" });
+    }
+    return options;
   };
 
   return (
@@ -345,10 +613,7 @@ export default function AddSubscription() {
         <Animated.View
           style={[
             styles.formContainer,
-            {
-              transform: [{ translateY: slideAnim }],
-              opacity: fadeAnim,
-            },
+            { transform: [{ translateY: slideAnim }], opacity: fadeAnim },
           ]}
         >
           <View style={styles.headerContainer}>
@@ -373,7 +638,7 @@ export default function AddSubscription() {
                 touched.appName && errors.appName ? styles.inputError : null,
               ]}
               placeholder="Enter app name"
-              placeholderTextColor="#9D9DB5"
+              placeholderTextColor={colors.textSecondary}
               value={appName}
               onChangeText={handleAppNameChange}
             />
@@ -394,7 +659,7 @@ export default function AddSubscription() {
                   touched.price && errors.price ? styles.inputError : null,
                 ]}
                 placeholder="0"
-                placeholderTextColor="#9D9DB5"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
                 value={price}
                 onChangeText={handlePriceChange}
@@ -421,69 +686,55 @@ export default function AddSubscription() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>
-              Billing Cycle <Text style={styles.requiredIndicator}>*</Text>
-            </Text>
-            <View
-              style={[
-                styles.pickerContainer,
-                touched.billing && errors.billing ? styles.inputError : null,
+            <CustomEnumPicker
+              label="Billing Cycle"
+              items={[
+                { label: "Daily", value: "Daily" },
+                { label: "Monthly", value: "Monthly" },
+                { label: "Yearly", value: "Yearly" },
               ]}
-            >
-              <RNPickerSelect
-                onValueChange={handleBillingChange}
-                value={billing}
-                placeholder={{ label: "Select billing cycle", value: "" }}
-                items={[
-                  { label: "Daily", value: "Daily" },
-                  { label: "Monthly", value: "Monthly" },
-                  { label: "Yearly", value: "Yearly" },
-                ]}
-                style={{
-                  inputIOS: styles.pickerText,
-                  inputAndroid: styles.pickerText,
-                  placeholder: styles.placeholderText,
-                }}
-                useNativeAndroidPickerStyle={false}
-                Icon={() => (
-                  <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
-                )}
-              />
-            </View>
-            {touched.billing && errors.billing && (
-              <Text style={styles.errorText}>{errors.billing}</Text>
-            )}
+              selectedValue={billing}
+              onValueChange={handleBillingChange}
+              placeholder="Select billing cycle"
+              colors={colors}
+              isRequired={true}
+              errorText={touched.billing && errors.billing ? errors.billing : undefined}
+            />
           </View>
 
-          {/* Category Selection */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Category (Optional)</Text>
-            <View style={styles.pickerContainer}>
-              <RNPickerSelect
-                onValueChange={setCategory}
-                value={category}
-                placeholder={{ label: "Select a category", value: "" }}
-                items={[
-                  { label: "Entertainment", value: "Entertainment" },
-                  { label: "Productivity", value: "Productivity" },
-                  { label: "Utilities", value: "Utilities" },
-                  { label: "Social Media", value: "Social Media" },
-                  { label: "Gaming", value: "Gaming" },
-                  { label: "Education", value: "Education" },
-                  { label: "Health & Fitness", value: "Health & Fitness" },
-                  { label: "Other", value: "Other" },
-                ]}
-                style={{
-                  inputIOS: styles.pickerText,
-                  inputAndroid: styles.pickerText,
-                  placeholder: styles.placeholderText,
-                }}
-                useNativeAndroidPickerStyle={false}
-              />
-            </View>
+            <CustomEnumPicker
+              label="Category (Optional)"
+              items={[
+                { label: "Entertainment", value: "Entertainment" },
+                { label: "Productivity", value: "Productivity" },
+                { label: "Utilities", value: "Utilities" },
+                { label: "Social Media", value: "Social Media" },
+                { label: "Gaming", value: "Gaming" },
+                { label: "Education", value: "Education" },
+                { label: "Health & Fitness", value: "Health & Fitness" },
+                { label: "Other", value: "Other" },
+              ]}
+              selectedValue={category}
+              onValueChange={setCategory}
+              placeholder="Select a category"
+              colors={colors}
+            />
           </View>
 
-          {/* Icon Selection */}
+          {/* Reminder Picker */}
+          <View style={styles.formGroup}>
+            <CustomEnumPicker
+              label="Reminder Notification"
+              items={getReminderOptions(billing)}
+              selectedValue={reminder}
+              onValueChange={setReminder}
+              placeholder="Select a reminder preference"
+              colors={colors}
+              // isRequired={false} // Reminder is optional
+            />
+          </View>
+
           <View style={styles.formGroup}>
             <Text style={styles.label}>Icon (Optional)</Text>
             <ScrollView
@@ -508,12 +759,33 @@ export default function AddSubscription() {
                           : iconName
                       }
                       size={24}
-                      color={icon === iconName ? "#FFFFFF" : "#9D9DB5"}
+                      color={
+                        icon === iconName
+                          ? AppSpecificColors.pureWhite
+                          : colors.textSecondary
+                      }
                     />
                   </TouchableOpacity>
                 ))}
               </View>
             </ScrollView>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Custom Image (Optional)</Text>
+            <TouchableOpacity
+              onPress={pickImage}
+              style={styles.imagePickerButton}
+            >
+              <Text style={styles.imagePickerButtonText}>Choose Image</Text>
+            </TouchableOpacity>
+            {customImageUri && (
+              <Image
+                source={{ uri: customImageUri }}
+                style={styles.previewImage}
+                resizeMode="contain"
+              />
+            )}
           </View>
 
           <View style={styles.dueDateContainer}>
@@ -542,7 +814,6 @@ export default function AddSubscription() {
         </Animated.View>
       </ScrollView>
 
-      {/* Date picker modal for iOS */}
       {Platform.OS === "ios" && showDatePicker && (
         <Modal
           animationType="slide"
@@ -558,7 +829,10 @@ export default function AddSubscription() {
                 <Text style={styles.modalHeaderTitle}>Select Date</Text>
                 <TouchableOpacity onPress={handleCloseDatePicker}>
                   <Text
-                    style={[styles.modalHeaderButton, { color: "#4649E5" }]}
+                    style={[
+                      styles.modalHeaderButton,
+                      { color: colors.primary },
+                    ]}
                   >
                     Done
                   </Text>
@@ -576,7 +850,6 @@ export default function AddSubscription() {
         </Modal>
       )}
 
-      {/* Date picker for Android */}
       {Platform.OS === "android" && showDatePicker && (
         <DateTimePicker
           value={subscriptionDate}
@@ -589,241 +862,3 @@ export default function AddSubscription() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#050511",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 30,
-  },
-  formContainer: {
-    flex: 1,
-    padding: 20,
-  },
-  headerContainer: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#9D9DB5",
-    marginBottom: 4,
-  },
-  requiredNote: {
-    fontSize: 14,
-    color: "#9D9DB5",
-  },
-  formGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: "#1A1A2E",
-    borderRadius: 12,
-    padding: 16,
-    color: "#FFFFFF",
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#2D2D44",
-  },
-  inputError: {
-    borderColor: "#FF4D4F",
-  },
-  errorText: {
-    color: "#FF4D4F",
-    fontSize: 14,
-    marginTop: 6,
-  },
-  priceInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1A1A2E",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#2D2D44",
-    paddingHorizontal: 16,
-  },
-  currencyPrefix: {
-    color: "#00C853",
-    fontSize: 16,
-    marginRight: 4,
-  },
-  priceInput: {
-    flex: 1,
-    padding: 16,
-    color: "#FFFFFF",
-    fontSize: 16,
-    borderWidth: 0,
-  },
-  datePickerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1A1A2E",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#2D2D44",
-  },
-  dateIcon: {
-    marginRight: 10,
-  },
-  dateText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-  },
-  pickerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#1A1A2E",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#2D2D44",
-  },
-  pickerText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    flex: 1,
-  },
-  placeholderText: {
-    color: "#9D9DB5",
-  },
-  dueDateContainer: {
-    backgroundColor: "#1A1A2E",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 10,
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: "#2D2D44",
-  },
-  dueLabel: {
-    fontSize: 14,
-    color: "#9D9DB5",
-    marginBottom: 4,
-  },
-  dueDate: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#00C853",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#4649E5",
-    borderRadius: 12,
-    padding: 16,
-    marginRight: 10,
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#4649E5",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  saveButton: {
-    flex: 1,
-    backgroundColor: "#4649E5",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalView: {
-    backgroundColor: "#1A1A2E",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#2D2D44",
-  },
-  modalHeaderButton: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    padding: 4,
-  },
-  modalHeaderTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  iosDatePicker: {
-    height: 200,
-  },
-  requiredIndicator: {
-    color: "#FF4D4F",
-    fontWeight: "bold",
-  },
-  autoFilledNote: {
-    fontSize: 13,
-    color: "#9D9DB5",
-    fontWeight: "normal",
-  },
-  iconPickerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    backgroundColor: "#1A1A2E",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#2D2D44",
-  },
-  iconOption: {
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: "#1A1A2E",
-    marginHorizontal: 6,
-  },
-  selectedIconOption: {
-    backgroundColor: "#4649E5",
-  },
-  iconScrollView: {
-    flexDirection: "row",
-  },
-});

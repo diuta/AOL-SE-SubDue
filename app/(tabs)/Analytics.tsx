@@ -351,42 +351,28 @@ export default function Analytics() {
             </View>
 
             <Text style={styles.sectionTitle}>Cumulative Spending</Text>
-            <View style={styles.chartContainer}>
-              <BarChart
-                data={{
-                  labels: projectionData.labels,
-                  datasets: [
-                    {
-                      data: projectionData.cumulativeData,
-                    },
-                  ],
-                }}
-                width={chartDisplayWidth}
-                height={220}
-                yAxisLabel="Rp. "
-                yAxisSuffix=""
-                chartConfig={{
-                  backgroundColor: "#1A1A2E",
-                  backgroundGradientFrom: "#1A1A2E",
-                  backgroundGradientTo: "#1A1A2E",
-                  color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
-                  labelColor: (opacity = 1) =>
-                    `rgba(255, 255, 255, ${opacity})`,
-                  style: {
-                    borderRadius: 16,
-                  },
-                  formatYLabel: (value) =>
-                    formatChartNumber(parseInt(value), false),
-                  count: 5,
-                  propsForLabels: {
-                    fontFamily: "System",
-                  },
-                  formatTopBarValue: (value) => formatChartNumber(value),
-                }}
-                style={styles.chart}
-                showValuesOnTopOfBars={true}
-              />
-              <View style={styles.projectionDetails}>
+            <View style={styles.monthlyListOuterContainer}>
+              <View style={styles.monthlyBreakdownListContainer}>
+                {projectionData.labels.map((month, index) => {
+                  const isLastItem = index === projectionData.labels.length - 1;
+                  return (
+                    <View
+                      key={`cumulative-${index}`}
+                      style={[
+                        styles.monthlyBreakdownItem,
+                        isLastItem && { borderBottomWidth: 0 },
+                      ]}
+                    >
+                      <Text style={styles.monthlyBreakdownMonthText}>{month}</Text>
+                      <Text style={styles.monthlyBreakdownAmountText}>
+                        {formatChartNumber(projectionData.cumulativeData[index], true)}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+            <View style={[styles.projectionDetails, { marginTop: 10, marginBottom: 20 }]}>
                 <Text style={styles.chartLabel}>
                   Cumulative spending over time
                 </Text>
@@ -399,7 +385,6 @@ export default function Analytics() {
                     true
                   )}
                 </Text>
-              </View>
             </View>
           </>
         ) : (

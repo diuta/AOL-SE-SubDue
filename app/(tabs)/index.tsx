@@ -21,7 +21,7 @@ import { formatCurrency } from "@/utils/formatUtils";
 import { defaultImages } from "@/constants/ImageConstants";
 import { VALID_ICONS, type IconName } from "@/constants/IconConstants";
 import { LinearGradient } from 'expo-linear-gradient';
-import { parse, differenceInDays, formatDistanceToNowStrict } from 'date-fns';
+import { parse, differenceInDays, formatDistanceToNowStrict, addDays, addMonths, addYears, isBefore, format } from 'date-fns';
 
 interface Subscription {
   id: string;
@@ -44,19 +44,52 @@ const iconMarginRight = screenWidth * 0.035;
 // Define Tab Bar Height for padding
 const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 72;
 
-// Helper function to get days until due - updated to return JSX
+// Helper function to calculate the next due date if the current one is past
+const calculateNextDueDate = (dueDateString: string, billing: string): string => {
+  if (!dueDateString || typeof dueDateString !== 'string') {
+    console.warn('Invalid dueDateString passed to calculateNextDueDate:', dueDateString);
+    return dueDateString;
+  }
+  try {
+    let nextDueDate = parse(dueDateString, 'dd MMMM yyyy', new Date());
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today to start of day
+
+    while (isBefore(nextDueDate, today)) {
+      if (billing === "Daily") {
+        nextDueDate = addDays(nextDueDate, 1);
+      } else if (billing === "Monthly") {
+        nextDueDate = addMonths(nextDueDate, 1);
+      } else if (billing === "Yearly") {
+        nextDueDate = addYears(nextDueDate, 1);
+      } else {
+        console.warn(`Unknown billing cycle: ${billing} for due date: ${dueDateString}`);
+        break;
+      }
+    }
+    return format(nextDueDate, 'dd MMMM yyyy');
+  } catch (error) {
+    console.error(`Error in calculateNextDueDate for date "${dueDateString}" and billing "${billing}":`, error);
+    return dueDateString;
+  }
+};
+
+// Helper function to get days until due - updated
 const getDaysUntilDue = (dueDateString: string): React.JSX.Element | string => {
   try {
+    // Ensure dueDateString is valid before parsing
+    if (!dueDateString || typeof dueDateString !== 'string') {
+      console.warn('Invalid dueDateString passed to getDaysUntilDue:', dueDateString);
+      return "Invalid date";
+    }
     const dueDate = parse(dueDateString, 'dd MMMM yyyy', new Date());
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const daysDifference = differenceInDays(dueDate, today);
 
     if (daysDifference < 0) {
-      const overdueDuration = formatDistanceToNowStrict(dueDate, { unit: 'day', addSuffix: false }).replace(' ago', '');
-      return (
-        <Text style={styles.detailTextStyle}>Overdue by <Text style={{ fontWeight: 'bold' }}>{overdueDuration}</Text></Text>
-      );
+      // This case should be rare if loadSubscriptions works correctly.
+      return <Text style={styles.detailTextStyle}>Processing renewal...</Text>;
     } else if (daysDifference === 0) {
       return <Text style={[styles.detailTextStyle, { fontWeight: 'bold' }]}>Due today</Text>;
     } else {
@@ -65,8 +98,8 @@ const getDaysUntilDue = (dueDateString: string): React.JSX.Element | string => {
       );
     }
   } catch (error) {
-    console.error("Error parsing due date:", dueDateString, error);
-    return "Due date invalid";
+    console.error("Error parsing due date in getDaysUntilDue:", dueDateString, error);
+    return "Invalid date";
   }
 };
 
@@ -101,11 +134,45 @@ export default function SubscriptionList() {
 
   const loadSubscriptions = async () => {
     try {
-      const subscriptions =
-        await DatabaseService.getSubscriptions<Subscription>();
-      setSubscriptions(subscriptions);
+      let fetchedSubscriptions = await DatabaseService.getSubscriptions<Subscription>();
+
+      const processedSubscriptions = await Promise.all(
+        (fetchedSubscriptions || []).map(async (sub) => {
+          if (!sub || typeof sub.dueDate !== 'string' || typeof sub.billing !== 'string') {
+            console.warn('Invalid subscription object, dueDate, or billing:', sub);
+            return sub;
+          }
+
+          try {
+            // Validate dueDate before extensive processing
+            parse(sub.dueDate, 'dd MMMM yyyy', new Date()); // This will throw if sub.dueDate is not a parseable date string
+
+            const originalDueDateObj = parse(sub.dueDate, 'dd MMMM yyyy', new Date());
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (isBefore(originalDueDateObj, today)) {
+              const newDueDateString = calculateNextDueDate(sub.dueDate, sub.billing);
+              if (sub.dueDate !== newDueDateString) {
+                const updatedSub = { ...sub, dueDate: newDueDateString };
+                await DatabaseService.updateSubscriptionById(sub.id, updatedSub);
+                return updatedSub;
+              }
+            }
+            return sub;
+          } catch (e) {
+            // Catch errors from parsing sub.dueDate or during calculateNextDueDate if it throws
+            console.error(`Error processing subscription ${sub.id} for due date update (original dueDate: "${sub.dueDate}"):`, e);
+            return sub;
+          }
+        })
+      );
+
+      setSubscriptions(processedSubscriptions);
+
     } catch (error) {
-      console.error("Error loading subscriptions:", error);
+      console.error("Error loading or updating subscriptions:", error);
+      setSubscriptions([]);
     }
   };
 

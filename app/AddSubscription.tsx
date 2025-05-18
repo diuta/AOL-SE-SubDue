@@ -457,10 +457,16 @@ export default function AddSubscription() {
   };
 
   const handlePriceChange = (value: string) => {
-    if (value === "" || /^\\d+(\\.\\d*)?$/.test(value)) {
-      setPrice(value);
+    const rawNumericString = value.replace(/[^\d]/g, "");
+
+    if (rawNumericString === "" || /^\d+$/.test(rawNumericString)) {
+      setPrice(rawNumericString);
       setTouched((prev) => ({ ...prev, price: true }));
-      validateField("price", value);
+      validateField("price", rawNumericString);
+    } else if (value === "" && price !== "") {
+      setPrice("");
+      setTouched((prev) => ({ ...prev, price: true }));
+      validateField("price", "");
     }
   };
 
@@ -661,7 +667,7 @@ export default function AddSubscription() {
                 placeholder="0"
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
-                value={price}
+                value={price ? formatCurrency(parseFloat(price), false) : ""}
                 onChangeText={handlePriceChange}
               />
             </View>

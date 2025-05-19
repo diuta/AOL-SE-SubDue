@@ -76,6 +76,7 @@ export default function Analytics() {
   // Calculate statistics from subscriptions
   const calculateStats = (subscriptions: Subscription[]) => {
     if (subscriptions.length === 0) {
+      console.log('No subscriptions found');
       setTotalMonthlySpending(0);
       setCategorySpending([]);
       return;
@@ -87,7 +88,10 @@ export default function Analytics() {
 
     subscriptions.forEach((sub) => {
       const price = parseFloat(sub.price);
-      if (isNaN(price)) return;
+      if (isNaN(price)) {
+        console.log('Invalid price found for subscription:', sub);
+        return;
+      }
 
       // Convert all prices to monthly
       let monthlyPrice = price;
@@ -115,7 +119,7 @@ export default function Analytics() {
         color: categoryColors[name as keyof typeof categoryColors] || "#CCCCCC",
         legendFontColor: "#FFFFFF",
         strokeWidth: 2,
-        strokeColor: "#1A1A2E",
+        strokeColor: "#000000",
       })
     );
 
@@ -248,17 +252,21 @@ export default function Analytics() {
                 height={220}
                 chartConfig={{
                   color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) =>
-                    `rgba(255, 255, 255, ${opacity})`,
+                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                  backgroundColor: "#1A1A2E",
+                  backgroundGradientFrom: "#1A1A2E",
+                  backgroundGradientTo: "#1A1A2E",
+                  decimalPlaces: 0,
                 }}
                 accessor="value"
                 backgroundColor="transparent"
-                paddingLeft="0"
+                paddingLeft="5"
                 absolute
                 hasLegend={false}
                 style={{
-                  strokeWidth: 3,
-                  stroke: "#1A1A2E",
+                  borderWidth: 2,
+                  borderColor: "#000000",
+                  marginVertical: 8,
                 }}
               />
 
@@ -308,56 +316,26 @@ export default function Analytics() {
       <View style={styles.tabContent}>
         {subscriptions.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Monthly Spending</Text>
+            {/* Display monthly breakdown at the top */}
+            <Text style={styles.sectionTitle}>Monthly Breakdown</Text>
             <View style={styles.chartContainer}>
-              <LineChart
-                data={{
-                  labels: projectionData.labels,
-                  datasets: projectionData.datasets,
-                }}
-                width={screenWidth}
-                height={220}
-                chartConfig={{
-                  backgroundColor: "#1A1A2E",
-                  backgroundGradientFrom: "#1A1A2E",
-                  backgroundGradientTo: "#1A1A2E",
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) =>
-                    `rgba(255, 255, 255, ${opacity})`,
-                  style: {
-                    borderRadius: 16,
-                  },
-                  propsForDots: {
-                    r: "6",
-                    strokeWidth: "2",
-                    stroke: "#4649E5",
-                  },
-                  formatYLabel: (value) =>
-                    formatChartNumber(parseInt(value), true),
-                  count: 5,
-                  yAxisInterval: 5,
-                }}
-                fromZero
-                bezier={false}
-                style={styles.chart}
-                yLabelsOffset={10}
-                withHorizontalLines={false}
-                withVerticalLines={false}
-              />
-              <View style={styles.projectionDetails}>
-                <Text style={styles.chartLabel}>
-                  Monthly spending projection over the next year
-                </Text>
-                <Text style={styles.projectionValue}>
-                  Average monthly:{" "}
-                  {formatChartNumber(
-                    projectionData.datasets[0].data.reduce((a, b) => a + b, 0) /
-                      12,
-                    true
-                  )}
-                </Text>
-              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.monthlyBreakdownContainer}
+              >
+                {projectionData.labels.map((month, index) => (
+                  <View key={index} style={styles.monthCard}>
+                    <Text style={styles.monthName}>{month}</Text>
+                    <Text style={styles.monthAmount}>
+                      {formatChartNumber(
+                        projectionData.datasets[0].data[index],
+                        true
+                      )}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
             </View>
 
             <Text style={styles.sectionTitle}>Cumulative Spending</Text>
@@ -394,7 +372,6 @@ export default function Analytics() {
                   formatYLabel: (value) =>
                     formatChartNumber(parseInt(value), true),
                   count: 5,
-                  yAxisInterval: 5,
                 }}
                 fromZero
                 bezier
@@ -417,28 +394,6 @@ export default function Analytics() {
                   )}
                 </Text>
               </View>
-            </View>
-
-            {/* Display monthly breakdown */}
-            <Text style={styles.sectionTitle}>Monthly Breakdown</Text>
-            <View style={styles.chartContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.monthlyBreakdownContainer}
-              >
-                {projectionData.labels.map((month, index) => (
-                  <View key={index} style={styles.monthCard}>
-                    <Text style={styles.monthName}>{month}</Text>
-                    <Text style={styles.monthAmount}>
-                      {formatChartNumber(
-                        projectionData.datasets[0].data[index],
-                        true
-                      )}
-                    </Text>
-                  </View>
-                ))}
-              </ScrollView>
             </View>
           </>
         ) : (
@@ -673,6 +628,8 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 300,
   },
   chart: {
     borderRadius: 16,

@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import "react-native-get-random-values";
-import { v4 as uuidv4 } from "uuid";
+import { nanoid } from "nanoid/non-secure";
 import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -299,7 +299,7 @@ export default function AddSubscription() {
     }
 
     const subscriptionData: Subscription = {
-      id: isEditMode ? subscriptionId : uuidv4(),
+      id: isEditMode ? subscriptionId : nanoid(),
       appName,
       price,
       subscriptionDate: formattedDate,
@@ -479,9 +479,6 @@ export default function AddSubscription() {
                   placeholder: styles.placeholderText,
                 }}
                 useNativeAndroidPickerStyle={false}
-                Icon={() => (
-                  <Ionicons name="chevron-down" size={20} color="#9D9DB5" />
-                )}
               />
             </View>
           </View>

@@ -269,6 +269,7 @@ export default function Analytics() {
                 backgroundColor="transparent"
                 paddingLeft="5"
                 absolute
+                center={[chartDisplayWidth / 4, 0]}
                 hasLegend={false}
                 style={{
                   borderWidth: 2,

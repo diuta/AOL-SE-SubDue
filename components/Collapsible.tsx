@@ -6,6 +6,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { StyleConstants } from "@/constants/StyleConstants";
 
 export function Collapsible({
   children,
@@ -25,7 +26,7 @@ export function Collapsible({
           name="chevron.right"
           size={18}
           weight="medium"
-          color={theme === "light" ? Colors.light.icon : Colors.dark.icon}
+          color={theme === "light" ? Colors.light.tabIconDefault : Colors.dark.tabIconDefault}
           style={{ transform: [{ rotate: isOpen ? "90deg" : "0deg" }] }}
         />
 
@@ -39,7 +40,7 @@ export function Collapsible({
 const styles = StyleSheet.create({
   heading: {
     flexDirection: "row",
-    alignItems: "center",
+    ...StyleConstants.alignItemsCenter,
     gap: 6,
   },
   content: {

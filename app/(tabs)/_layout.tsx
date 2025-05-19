@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter, usePathname } from "expo-router";
 import { View, StyleSheet, Platform } from "react-native";
 import FloatingAddButton from "../../components/FloatingAddButton";
+import { BlurView } from 'expo-blur';
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -13,7 +14,11 @@ export default function TabsLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: "#050511",
+            backgroundColor: "transparent",
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
             height: Platform.OS === "ios" ? 88 : 72,
             borderTopWidth: 0,
             elevation: 0,
@@ -25,6 +30,13 @@ export default function TabsLayout() {
           tabBarActiveTintColor: "#FFFFFF",
           tabBarInactiveTintColor: "#66667A",
           tabBarShowLabel: false,
+          tabBarBackground: () => (
+            <BlurView
+              tint="dark"
+              intensity={50}
+              style={StyleSheet.absoluteFill}
+            />
+          ),
         }}
       >
         <Tabs.Screen

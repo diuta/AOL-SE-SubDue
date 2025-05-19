@@ -1,5 +1,8 @@
 import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { RouteConstants } from "@/constants/RouteConstants";
+import { AppSpecificColors } from "@/constants/Colors";
+import { StyleConstants } from "@/constants/StyleConstants";
 
 export default function AddSubscriptionButton() {
   const router = useRouter();
@@ -9,7 +12,7 @@ export default function AddSubscriptionButton() {
       style={styles.button}
       onPress={() =>
         router.push({
-          pathname: "/AddSubscription",
+          pathname: RouteConstants.ADD_SUBSCRIPTION,
           params: { id: null },
         })
       }
@@ -21,13 +24,13 @@ export default function AddSubscriptionButton() {
 
 const styles = StyleSheet.create({
   text: {
-    color: "black",
+    color: AppSpecificColors.pureBlack,
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 15,
   },
   button: {
-    backgroundColor: "skyblue",
+    backgroundColor: AppSpecificColors.skyBlue,
     height: "8%",
     width: "40%",
     borderRadius: 10,
@@ -38,7 +41,6 @@ const styles = StyleSheet.create({
     elevation: 5,
     padding: 10,
     marginTop: "10%",
-    justifyContent: "center",
-    alignItems: "center",
+    ...StyleConstants.centerAlignment,
   },
 });

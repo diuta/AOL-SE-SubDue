@@ -7,10 +7,14 @@ import {
   TouchableOpacity,
   Linking,
   Image,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// Define Tab Bar Height for padding
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 72;
 
 // Mock data for recommended apps by category
 const recommendedApps = {
@@ -346,6 +350,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#050511",
+    paddingBottom: TAB_BAR_HEIGHT + 20,
   },
   header: {
     flexDirection: "row",
@@ -428,6 +433,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "600",
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: TAB_BAR_HEIGHT + 20,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: TAB_BAR_HEIGHT + 20,
   },
 });
 

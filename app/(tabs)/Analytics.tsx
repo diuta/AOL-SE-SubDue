@@ -8,6 +8,7 @@ import {
   StatusBar,
   Dimensions,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
@@ -29,9 +30,15 @@ interface Subscription {
   billing: string;
   category?: string;
   icon?: string;
+  customImage?: string;
 }
 
 const screenWidth = Dimensions.get("window").width - 40;
+const chartContainerPadding = 16; // Defined in styles.chartContainer
+const chartDisplayWidth = screenWidth - (2 * chartContainerPadding);
+
+// Define Tab Bar Height for padding
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 72;
 
 export default function Analytics() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -248,7 +255,7 @@ export default function Analytics() {
             <View style={styles.chartContainer}>
               <PieChart
                 data={categorySpending}
-                width={screenWidth}
+                width={chartDisplayWidth}
                 height={220}
                 chartConfig={{
                   color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
@@ -318,69 +325,54 @@ export default function Analytics() {
           <>
             {/* Display monthly breakdown at the top */}
             <Text style={styles.sectionTitle}>Monthly Breakdown</Text>
-            <View style={styles.chartContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.monthlyBreakdownContainer}
-              >
-                {projectionData.labels.map((month, index) => (
-                  <View key={index} style={styles.monthCard}>
-                    <Text style={styles.monthName}>{month}</Text>
-                    <Text style={styles.monthAmount}>
-                      {formatChartNumber(
-                        projectionData.datasets[0].data[index],
-                        true
-                      )}
-                    </Text>
-                  </View>
-                ))}
-              </ScrollView>
+            <View style={styles.monthlyListOuterContainer}>
+              <View style={styles.monthlyBreakdownListContainer}>
+                {projectionData.labels.map((month, index) => {
+                  const isLastItem = index === projectionData.labels.length - 1;
+                  return (
+                    <View
+                      key={index}
+                      style={[
+                        styles.monthlyBreakdownItem,
+                        isLastItem && { borderBottomWidth: 0 },
+                      ]}
+                    >
+                      <Text style={styles.monthlyBreakdownMonthText}>{month}</Text>
+                      <Text style={styles.monthlyBreakdownAmountText}>
+                        {formatChartNumber(
+                          projectionData.datasets[0].data[index],
+                          true
+                        )}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
             </View>
 
             <Text style={styles.sectionTitle}>Cumulative Spending</Text>
-            <View style={styles.chartContainer}>
-              <LineChart
-                data={{
-                  labels: projectionData.labels,
-                  datasets: [
-                    {
-                      data: projectionData.cumulativeData,
-                      color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
-                      strokeWidth: 2,
-                    },
-                  ],
-                }}
-                width={screenWidth}
-                height={220}
-                chartConfig={{
-                  backgroundColor: "#1A1A2E",
-                  backgroundGradientFrom: "#1A1A2E",
-                  backgroundGradientTo: "#1A1A2E",
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) =>
-                    `rgba(255, 255, 255, ${opacity})`,
-                  style: {
-                    borderRadius: 16,
-                  },
-                  propsForDots: {
-                    r: "6",
-                    strokeWidth: "2",
-                    stroke: "#FF6384",
-                  },
-                  formatYLabel: (value) =>
-                    formatChartNumber(parseInt(value), true),
-                  count: 5,
-                }}
-                fromZero
-                bezier
-                style={styles.chart}
-                yLabelsOffset={10}
-                withHorizontalLines={false}
-                withVerticalLines={false}
-              />
-              <View style={styles.projectionDetails}>
+            <View style={styles.monthlyListOuterContainer}>
+              <View style={styles.monthlyBreakdownListContainer}>
+                {projectionData.labels.map((month, index) => {
+                  const isLastItem = index === projectionData.labels.length - 1;
+                  return (
+                    <View
+                      key={`cumulative-${index}`}
+                      style={[
+                        styles.monthlyBreakdownItem,
+                        isLastItem && { borderBottomWidth: 0 },
+                      ]}
+                    >
+                      <Text style={styles.monthlyBreakdownMonthText}>{month}</Text>
+                      <Text style={styles.monthlyBreakdownAmountText}>
+                        {formatChartNumber(projectionData.cumulativeData[index], true)}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+            <View style={[styles.projectionDetails, { marginTop: 10, marginBottom: 20 }]}>
                 <Text style={styles.chartLabel}>
                   Cumulative spending over time
                 </Text>
@@ -393,7 +385,6 @@ export default function Analytics() {
                     true
                   )}
                 </Text>
-              </View>
             </View>
           </>
         ) : (
@@ -427,7 +418,7 @@ export default function Analytics() {
                 },
               ],
             }}
-            width={screenWidth}
+            width={chartDisplayWidth}
             height={220}
             yAxisLabel="Rp. "
             yAxisSuffix=""
@@ -435,14 +426,17 @@ export default function Analytics() {
               backgroundColor: "#1A1A2E",
               backgroundGradientFrom: "#1A1A2E",
               backgroundGradientTo: "#1A1A2E",
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(70, 73, 229, ${opacity})`,
+              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
               labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
               style: {
                 borderRadius: 16,
               },
-              formatYLabel: (value) => formatChartNumber(parseInt(value)),
+              formatYLabel: (value) =>
+                formatChartNumber(parseInt(value), false),
               formatTopBarValue: (value) => formatChartNumber(value),
+              propsForLabels: {
+                fontFamily: "System",
+              },
             }}
             style={styles.chart}
             showValuesOnTopOfBars
@@ -589,7 +583,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: TAB_BAR_HEIGHT + 20,
   },
   tabContent: {
     marginTop: 10,
@@ -704,31 +698,40 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 4,
   },
-  monthlyBreakdownContainer: {
+  monthlyBreakdownListContainer: {
+    width: "100%",
     paddingVertical: 8,
-    paddingHorizontal: 4,
   },
-  monthCard: {
-    backgroundColor: "#2B2C4B",
-    borderRadius: 8,
-    padding: 12,
-    marginHorizontal: 6,
-    minWidth: 100,
+  monthlyBreakdownItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2B2C4B",
   },
-  monthName: {
+  monthlyBreakdownMonthText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 6,
+    fontWeight: "500",
+    fontFamily: "System",
   },
-  monthAmount: {
+  monthlyBreakdownAmountText: {
     color: "#00C853",
     fontSize: 14,
+    fontWeight: "500",
+    fontFamily: "System",
   },
   dueDate: {
     fontSize: 16,
     fontWeight: "500",
     color: "#00C853",
+  },
+  monthlyListOuterContainer: {
+    backgroundColor: "#1A1A2E",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
   },
 });

@@ -1,4 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { AppSpecificColors } from "@/constants/Colors";
+import { StyleConstants } from "@/constants/StyleConstants";
 
 export default function SaveBtn() {
   return (
@@ -15,13 +17,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
   },
   text: {
-    color: "black",
+    color: AppSpecificColors.pureBlack,
     textAlign: "center",
     fontWeight: "bold",
   },
   button: {
     marginTop: 70,
-    backgroundColor: "skyblue",
+    backgroundColor: AppSpecificColors.skyBlue,
     height: 50,
     width: "20%",
     borderRadius: 10,
@@ -32,7 +34,6 @@ const styles = StyleSheet.create({
     elevation: 5,
     padding: 10,
     marginBottom: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    ...StyleConstants.centerAlignment,
   },
 });

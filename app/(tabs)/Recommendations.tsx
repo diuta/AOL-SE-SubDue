@@ -274,7 +274,7 @@ const RecommendationCard = ({ app }: { app: App }) => {
   const handleAddSubscription = () => {
     router.push({
       pathname: "/AddSubscription",
-      params: { name: app.name, price: app.price },
+      params: { name: app.name },
     });
   };
 

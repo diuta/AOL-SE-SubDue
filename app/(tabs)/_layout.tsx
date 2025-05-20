@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter, usePathname } from "expo-router";
 import { View, StyleSheet, Platform } from "react-native";
 import FloatingAddButton from "../../components/FloatingAddButton";
-import { BlurView } from 'expo-blur';
+import { BlurView } from "expo-blur";
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarStyle: {
             backgroundColor: "transparent",
-            position: 'absolute',
+            position: "absolute",
             left: 0,
             right: 0,
             bottom: 0,
@@ -43,7 +43,9 @@ export default function TabsLayout() {
           name="index"
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <View
+                style={[styles.tabButton, focused && styles.tabButtonActive]}
+              >
                 <Ionicons
                   size={24}
                   name={focused ? "home" : "home-outline"}
@@ -57,7 +59,9 @@ export default function TabsLayout() {
           name="Analytics"
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <View
+                style={[styles.tabButton, focused && styles.tabButtonActive]}
+              >
                 <Ionicons
                   size={24}
                   name={focused ? "analytics" : "analytics-outline"}
@@ -71,7 +75,9 @@ export default function TabsLayout() {
           name="Recommendations"
           options={{
             tabBarIcon: ({ focused }) => (
-              <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <View
+                style={[styles.tabButton, focused && styles.tabButtonActive]}
+              >
                 <Ionicons
                   size={24}
                   name={focused ? "star" : "star-outline"}
@@ -83,7 +89,11 @@ export default function TabsLayout() {
         />
       </Tabs>
       {pathname === "/" && (
-        <FloatingAddButton onPress={() => router.push({ pathname: "/AddSubscription", params: { id: "" } })} />
+        <FloatingAddButton
+          onPress={() =>
+            router.push({ pathname: "/AddSubscription", params: { id: "" } })
+          }
+        />
       )}
     </View>
   );

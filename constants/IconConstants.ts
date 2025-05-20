@@ -17,4 +17,4 @@ export const VALID_ICONS = [
   "home-outline",
 ] as const;
 
-export type IconName = (typeof VALID_ICONS)[number]; 
+export type IconName = (typeof VALID_ICONS)[number];

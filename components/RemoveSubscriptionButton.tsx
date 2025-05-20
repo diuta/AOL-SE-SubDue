@@ -78,7 +78,10 @@ export default function RemoveSubscriptionButton({
                 await DatabaseService.removeSubscriptionById(id);
                 onUpdate();
               } catch (error) {
-                console.error(MessageConstants.ERROR_REMOVING_SUBSCRIPTION, error);
+                console.error(
+                  MessageConstants.ERROR_REMOVING_SUBSCRIPTION,
+                  error,
+                );
               }
             },
           },

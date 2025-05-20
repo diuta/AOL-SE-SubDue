@@ -35,10 +35,10 @@ interface Subscription {
 
 const screenWidth = Dimensions.get("window").width - 40;
 const chartContainerPadding = 16; // Defined in styles.chartContainer
-const chartDisplayWidth = screenWidth - (2 * chartContainerPadding);
+const chartDisplayWidth = screenWidth - 2 * chartContainerPadding;
 
 // Define Tab Bar Height for padding
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 72;
+const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 72;
 
 export default function Analytics() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -65,7 +65,7 @@ export default function Analytics() {
   useFocusEffect(
     React.useCallback(() => {
       loadSubscriptions();
-    }, [])
+    }, []),
   );
 
   const loadSubscriptions = async () => {
@@ -83,7 +83,7 @@ export default function Analytics() {
   // Calculate statistics from subscriptions
   const calculateStats = (subscriptions: Subscription[]) => {
     if (subscriptions.length === 0) {
-      console.log('No subscriptions found');
+      console.log("No subscriptions found");
       setTotalMonthlySpending(0);
       setCategorySpending([]);
       return;
@@ -96,7 +96,7 @@ export default function Analytics() {
     subscriptions.forEach((sub) => {
       const price = parseFloat(sub.price);
       if (isNaN(price)) {
-        console.log('Invalid price found for subscription:', sub);
+        console.log("Invalid price found for subscription:", sub);
         return;
       }
 
@@ -127,7 +127,7 @@ export default function Analytics() {
         legendFontColor: "#FFFFFF",
         strokeWidth: 2,
         strokeColor: "#000000",
-      })
+      }),
     );
 
     setCategorySpending(categoryData);
@@ -193,7 +193,7 @@ export default function Analytics() {
             const dueDateParts = sub.dueDate.split(" ");
             if (dueDateParts.length >= 2) {
               const dueMonth = months.findIndex((m) =>
-                dueDateParts[1].toLowerCase().startsWith(m.toLowerCase())
+                dueDateParts[1].toLowerCase().startsWith(m.toLowerCase()),
               );
 
               if (dueMonth !== -1) {
@@ -259,7 +259,8 @@ export default function Analytics() {
                 height={220}
                 chartConfig={{
                   color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                  labelColor: (opacity = 1) =>
+                    `rgba(255, 255, 255, ${opacity})`,
                   backgroundColor: "#1A1A2E",
                   backgroundGradientFrom: "#1A1A2E",
                   backgroundGradientTo: "#1A1A2E",
@@ -290,7 +291,7 @@ export default function Analytics() {
                     <Text style={styles.legendText}>
                       {category.name} (
                       {((category.value / totalMonthlySpending) * 100).toFixed(
-                        0
+                        0,
                       )}
                       %):{" "}
                       <Text style={{ color: "#00C853" }}>
@@ -338,11 +339,13 @@ export default function Analytics() {
                         isLastItem && { borderBottomWidth: 0 },
                       ]}
                     >
-                      <Text style={styles.monthlyBreakdownMonthText}>{month}</Text>
+                      <Text style={styles.monthlyBreakdownMonthText}>
+                        {month}
+                      </Text>
                       <Text style={styles.monthlyBreakdownAmountText}>
                         {formatChartNumber(
                           projectionData.datasets[0].data[index],
-                          true
+                          true,
                         )}
                       </Text>
                     </View>
@@ -364,28 +367,38 @@ export default function Analytics() {
                         isLastItem && { borderBottomWidth: 0 },
                       ]}
                     >
-                      <Text style={styles.monthlyBreakdownMonthText}>{month}</Text>
+                      <Text style={styles.monthlyBreakdownMonthText}>
+                        {month}
+                      </Text>
                       <Text style={styles.monthlyBreakdownAmountText}>
-                        {formatChartNumber(projectionData.cumulativeData[index], true)}
+                        {formatChartNumber(
+                          projectionData.cumulativeData[index],
+                          true,
+                        )}
                       </Text>
                     </View>
                   );
                 })}
               </View>
             </View>
-            <View style={[styles.projectionDetails, { marginTop: 10, marginBottom: 20 }]}>
-                <Text style={styles.chartLabel}>
-                  Cumulative spending over time
-                </Text>
-                <Text style={styles.projectionValue}>
-                  Total for 12 months:{" "}
-                  {formatChartNumber(
-                    projectionData.cumulativeData[
-                      projectionData.cumulativeData.length - 1
-                    ],
-                    true
-                  )}
-                </Text>
+            <View
+              style={[
+                styles.projectionDetails,
+                { marginTop: 10, marginBottom: 20 },
+              ]}
+            >
+              <Text style={styles.chartLabel}>
+                Cumulative spending over time
+              </Text>
+              <Text style={styles.projectionValue}>
+                Total for 12 months:{" "}
+                {formatChartNumber(
+                  projectionData.cumulativeData[
+                    projectionData.cumulativeData.length - 1
+                  ],
+                  true,
+                )}
+              </Text>
             </View>
           </>
         ) : (
@@ -411,7 +424,7 @@ export default function Analytics() {
               labels: categorySpending.map((cat) =>
                 cat.name.length > 10
                   ? cat.name.substring(0, 10) + "..."
-                  : cat.name
+                  : cat.name,
               ),
               datasets: [
                 {

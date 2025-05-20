@@ -24,9 +24,13 @@ export type CustomEnumPickerProps = {
   isRequired?: boolean;
 };
 
-const makeStyles = (colors: typeof Colors.light, platformOS: typeof Platform.OS) =>
+const makeStyles = (
+  colors: typeof Colors.light,
+  platformOS: typeof Platform.OS,
+) =>
   StyleSheet.create({
-    formGroup: { // Re-using similar structure for consistency if needed elsewhere
+    formGroup: {
+      // Re-using similar structure for consistency if needed elsewhere
       marginBottom: 20, // Matches AddSubscription formGroup margin if this picker is used outside a formGroup
     },
     labelContainer: {
@@ -84,9 +88,9 @@ const makeStyles = (colors: typeof Colors.light, platformOS: typeof Platform.OS)
       borderTopRightRadius: 20,
       paddingHorizontal: 16,
       paddingTop: 8, // Reduced top padding
-      paddingBottom: platformOS === 'ios' ? 30 : 20, // SafeArea for bottom
+      paddingBottom: platformOS === "ios" ? 30 : 20, // SafeArea for bottom
       maxHeight: "70%", // Limit modal height
-      ...(Platform.select({
+      ...Platform.select({
         ios: {
           shadowColor: AppSpecificColors.pureBlack,
           shadowOffset: { width: 0, height: -3 },
@@ -100,9 +104,9 @@ const makeStyles = (colors: typeof Colors.light, platformOS: typeof Platform.OS)
           boxShadow: `0px -3px 6px rgba(0,0,0,0.1)`,
           // To ensure border-radius is respected with boxShadow on web:
           borderWidth: 1, // Or a very small value like 0.1 if no border is desired
-          borderColor: 'transparent', // Match background or make transparent
-        }
-      })),
+          borderColor: "transparent", // Match background or make transparent
+        },
+      }),
     },
     modalHeader: {
       flexDirection: "row",
@@ -140,7 +144,7 @@ const makeStyles = (colors: typeof Colors.light, platformOS: typeof Platform.OS)
     },
     modalItemNoBorder: {
       borderBottomWidth: 0,
-    }
+    },
   });
 
 const CustomEnumPicker: React.FC<CustomEnumPickerProps> = ({
@@ -156,7 +160,8 @@ const CustomEnumPicker: React.FC<CustomEnumPickerProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const styles = makeStyles(colors, Platform.OS);
 
-  const selectedLabel = items.find((item) => item.value === selectedValue)?.label || placeholder;
+  const selectedLabel =
+    items.find((item) => item.value === selectedValue)?.label || placeholder;
 
   return (
     <View style={styles.formGroup}>
@@ -171,7 +176,9 @@ const CustomEnumPicker: React.FC<CustomEnumPickerProps> = ({
         ]}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={selectedValue ? styles.pickerText : styles.placeholderText}>
+        <Text
+          style={selectedValue ? styles.pickerText : styles.placeholderText}
+        >
           {selectedLabel}
         </Text>
         <Ionicons
@@ -189,35 +196,45 @@ const CustomEnumPicker: React.FC<CustomEnumPickerProps> = ({
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableOpacity 
-          style={styles.centeredView} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.centeredView}
+          activeOpacity={1}
           onPressOut={() => setModalVisible(false)} // Close by tapping outside modal content
         >
-          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()} style={styles.modalView}> 
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={styles.modalView}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalHeaderTitle}>{label}</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Text style={styles.modalCloseButtonText}>Done</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={styles.modalScrollView}
+              showsVerticalScrollIndicator={false}
+            >
               {items.map((item, index) => (
                 <TouchableOpacity
                   key={item.value}
                   style={[
                     styles.modalItem,
-                    index === items.length - 1 ? styles.modalItemNoBorder : null, // Remove border for last item
+                    index === items.length - 1
+                      ? styles.modalItemNoBorder
+                      : null, // Remove border for last item
                   ]}
                   onPress={() => {
                     onValueChange(item.value);
                     setModalVisible(false);
                   }}
                 >
-                  <Text 
+                  <Text
                     style={[
                       styles.modalItemText,
-                      item.value === selectedValue && styles.modalItemSelectedText
+                      item.value === selectedValue &&
+                        styles.modalItemSelectedText,
                     ]}
                   >
                     {item.label}
@@ -232,4 +249,4 @@ const CustomEnumPicker: React.FC<CustomEnumPickerProps> = ({
   );
 };
 
-export default CustomEnumPicker; 
+export default CustomEnumPicker;

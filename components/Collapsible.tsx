@@ -26,7 +26,11 @@ export function Collapsible({
           name="chevron.right"
           size={18}
           weight="medium"
-          color={theme === "light" ? Colors.light.tabIconDefault : Colors.dark.tabIconDefault}
+          color={
+            theme === "light"
+              ? Colors.light.tabIconDefault
+              : Colors.dark.tabIconDefault
+          }
           style={{ transform: [{ rotate: isOpen ? "90deg" : "0deg" }] }}
         />
 

@@ -34,7 +34,10 @@ import { VALID_ICONS, type IconName } from "@/constants/IconConstants";
 import CustomEnumPicker, { PickerItem } from "@/components/CustomEnumPicker";
 
 // Define makeStyles outside and before the component
-const makeStyles = (colors: typeof Colors.light, platformOS: typeof Platform.OS) =>
+const makeStyles = (
+  colors: typeof Colors.light,
+  platformOS: typeof Platform.OS,
+) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -242,7 +245,7 @@ const makeStyles = (colors: typeof Colors.light, platformOS: typeof Platform.OS)
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
       padding: 16,
-      ...(Platform.select({
+      ...Platform.select({
         ios: {
           shadowColor: AppSpecificColors.pureBlack,
           shadowOffset: { width: 0, height: -3 },
@@ -255,9 +258,9 @@ const makeStyles = (colors: typeof Colors.light, platformOS: typeof Platform.OS)
         web: {
           boxShadow: `0px -3px 6px rgba(0,0,0,0.1)`,
           borderWidth: 1,
-          borderColor: 'transparent',
-        }
-      })),
+          borderColor: "transparent",
+        },
+      }),
     },
     modalHeader: {
       flexDirection: "row",
@@ -305,25 +308,31 @@ export type ValidationErrors = {
 };
 
 export default function AddSubscription() {
-  const colorScheme = useColorScheme() || "light";
-  const colors = Colors[colorScheme];
   const router = useRouter();
-  const params = useLocalSearchParams();
-  const subscriptionId = params.id as string;
-  const isEditMode = !!subscriptionId && subscriptionId.trim() !== "";
+  const params = useLocalSearchParams<{
+    id?: string;
+    name?: string;
+    price?: string;
+  }>();
+  const colorScheme = useColorScheme();
+  const colors = colorScheme === "dark" ? Colors.dark : Colors.light;
   const styles = makeStyles(colors, Platform.OS);
 
-  const [appName, setAppName] = useState<string>("");
-  const [price, setPrice] = useState<string>("");
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [appName, setAppName] = useState("");
+  const [price, setPrice] = useState("");
   const [subscriptionDate, setSubscriptionDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [billing, setBilling] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [icon, setIcon] = useState<IconName | "">("");
-  const [customImageUri, setCustomImageUri] = useState<string | null>(null);
+  const [customImage, setCustomImage] = useState<string | null>(null);
+  const [originalCustomImage, setOriginalCustomImage] = useState<string | null>(
+    null,
+  );
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [isWeb, setIsWeb] = useState<boolean>(Platform.OS === "web");
-  const [slideAnim] = useState(new Animated.Value(100));
+  const [slideAnim] = useState(new Animated.Value(0));
   const [fadeAnim] = useState(new Animated.Value(0));
   const [reminder, setReminder] = useState<string | undefined>("none");
 
@@ -334,34 +343,48 @@ export default function AddSubscription() {
     billing: false,
   });
 
+  const isEditMode = !!params.id && params.id.trim() !== "";
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
+        toValue: 1,
+        duration: 500,
         useNativeDriver: true,
+        delay: 100,
       }),
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 400,
         useNativeDriver: true,
+        delay: 200,
       }),
     ]).start();
 
-    if (isEditMode) {
-      loadSubscriptionData();
+    if (isEditMode && params.id) {
+      setCurrentId(params.id);
+      loadSubscriptionData(params.id);
     } else {
+      if (params.name) {
+        setAppName(params.name);
+      }
+      if (params.price) {
+        setPrice(params.price);
+      }
+      const newId = nanoid();
+      setCurrentId(newId);
       setReminder("none");
+      const initialBillingCycle = "Monthly";
+      setBilling(initialBillingCycle);
+      updateDueDate(subscriptionDate, initialBillingCycle);
     }
-  }, []);
+  }, [params.id, params.name, params.price, isEditMode]);
 
-  const loadSubscriptionData = async () => {
+  const loadSubscriptionData = async (id: string) => {
     try {
       const subscriptions =
         await DatabaseService.getSubscriptions<Subscription>();
-      const subscription = subscriptions.find(
-        (sub) => sub.id === subscriptionId
-      );
+      const subscription = subscriptions.find((sub) => sub.id === id);
 
       if (subscription) {
         setAppName(subscription.appName);
@@ -369,19 +392,20 @@ export default function AddSubscription() {
         const parsedSubscriptionDate = parse(
           subscription.subscriptionDate,
           "dd MMMM yyyy",
-          new Date()
+          new Date(),
         );
         setSubscriptionDate(parsedSubscriptionDate);
         const parsedDueDate = parse(
           subscription.dueDate,
           "dd MMMM yyyy",
-          new Date()
+          new Date(),
         );
         setDueDate(parsedDueDate);
         setBilling(subscription.billing);
         setCategory(subscription.category || "");
         setIcon((subscription.icon as IconName) || "");
-        setCustomImageUri(subscription.customImage || null);
+        setCustomImage(subscription.customImage || null);
+        setOriginalCustomImage(subscription.customImage || null);
         setReminder(subscription.reminder || "none");
       }
     } catch (error) {
@@ -391,7 +415,7 @@ export default function AddSubscription() {
 
   useFocusEffect(
     React.useCallback(() => {
-      if (!isEditMode) {
+      if (!currentId) {
         setAppName("");
         setPrice("");
         setSubscriptionDate(new Date());
@@ -399,7 +423,8 @@ export default function AddSubscription() {
         setBilling("");
         setCategory("");
         setIcon("");
-        setCustomImageUri(null);
+        setCustomImage(null);
+        setOriginalCustomImage(null);
         setReminder("none");
         setErrors({});
         setTouched({
@@ -408,9 +433,9 @@ export default function AddSubscription() {
           billing: false,
         });
       } else {
-        loadSubscriptionData();
+        loadSubscriptionData(currentId);
       }
-    }, [isEditMode])
+    }, [currentId]),
   );
 
   const updateDueDate = (date: Date, billingCycle: string) => {
@@ -427,7 +452,7 @@ export default function AddSubscription() {
 
   const handleDateChange = (
     event: DateTimePickerEvent,
-    selectedDate?: Date
+    selectedDate?: Date,
   ) => {
     if (Platform.OS === "android") {
       setShowDatePicker(false);
@@ -509,15 +534,21 @@ export default function AddSubscription() {
 
   const saveSubscription = async () => {
     if (!validateForm()) return;
-    let imageToSave = customImageUri;
+
+    if (!currentId) {
+      console.error("Error: Subscription ID is missing.");
+      return;
+    }
+
+    let imageToSave = customImage;
     if (!imageToSave) {
       const matchedDefaultImageKey = Object.keys(defaultImages).find((key) =>
-        appName.toLowerCase().includes(key.toLowerCase())
+        appName.toLowerCase().includes(key.toLowerCase()),
       );
       if (matchedDefaultImageKey) imageToSave = matchedDefaultImageKey;
     }
     const subscriptionData: Subscription = {
-      id: isEditMode ? subscriptionId : nanoid(),
+      id: currentId,
       appName,
       price,
       subscriptionDate: formattedDate,
@@ -529,18 +560,17 @@ export default function AddSubscription() {
       reminder: reminder === "none" ? undefined : reminder,
     };
     try {
-      if (isEditMode)
+      if (isEditMode) {
         await DatabaseService.updateSubscriptionById(
-          subscriptionId,
-          subscriptionData
+          subscriptionData.id,
+          subscriptionData,
         );
-      else await DatabaseService.addSubscription(subscriptionData);
+      } else {
+        await DatabaseService.addSubscription(subscriptionData);
+      }
       router.replace("/");
     } catch (error) {
-      console.error(
-        `Error ${isEditMode ? "updating" : "saving"} subscription:`,
-        error
-      );
+      console.error("Error saving subscription:", error);
     }
   };
 
@@ -548,7 +578,8 @@ export default function AddSubscription() {
 
   const pickImage = async () => {
     if (Platform.OS !== "web") {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         alert("Sorry, we need camera roll permissions to make this work!");
         return;
@@ -563,21 +594,24 @@ export default function AddSubscription() {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedAsset = result.assets[0];
       if (Platform.OS === "web") {
-        setCustomImageUri(selectedAsset.uri);
+        setCustomImage(selectedAsset.uri);
       } else {
         const fileName = selectedAsset.uri.split("/").pop();
         if (FileSystem.documentDirectory && fileName) {
           const newPath = FileSystem.documentDirectory + fileName;
           try {
-            await FileSystem.copyAsync({ from: selectedAsset.uri, to: newPath });
-            setCustomImageUri(newPath);
+            await FileSystem.copyAsync({
+              from: selectedAsset.uri,
+              to: newPath,
+            });
+            setCustomImage(newPath);
           } catch (e) {
             console.error("Error copying image:", e);
             alert("Failed to save image.");
           }
         } else {
           console.error(
-            "Error: Document directory or filename is not available."
+            "Error: Document directory or filename is not available.",
           );
           alert("Failed to save image.");
         }
@@ -624,10 +658,10 @@ export default function AddSubscription() {
         >
           <View style={styles.headerContainer}>
             <Text style={styles.title}>
-              {isEditMode ? "Edit" : "Add"} Subscription
+              {currentId ? "Edit" : "Add"} Subscription
             </Text>
             <Text style={styles.subtitle}>
-              {isEditMode ? "Update" : "Enter"} the details of your subscription
+              {currentId ? "Update" : "Enter"} the details of your subscription
             </Text>
             <Text style={styles.requiredNote}>
               <Text style={styles.requiredIndicator}>*</Text> Required fields
@@ -679,7 +713,7 @@ export default function AddSubscription() {
           <View style={styles.formGroup}>
             <Text style={styles.label}>
               Subscription Date{" "}
-              {!isEditMode && (
+              {!currentId && (
                 <Text style={styles.autoFilledNote}>
                   (Auto-filled with today)
                 </Text>
@@ -704,7 +738,9 @@ export default function AddSubscription() {
               placeholder="Select billing cycle"
               colors={colors}
               isRequired={true}
-              errorText={touched.billing && errors.billing ? errors.billing : undefined}
+              errorText={
+                touched.billing && errors.billing ? errors.billing : undefined
+              }
             />
           </View>
 
@@ -785,9 +821,9 @@ export default function AddSubscription() {
             >
               <Text style={styles.imagePickerButtonText}>Choose Image</Text>
             </TouchableOpacity>
-            {customImageUri && (
+            {customImage && (
               <Image
-                source={{ uri: customImageUri }}
+                source={{ uri: customImage }}
                 style={styles.previewImage}
                 resizeMode="contain"
               />
@@ -813,7 +849,7 @@ export default function AddSubscription() {
               onPress={saveSubscription}
             >
               <Text style={styles.saveButtonText}>
-                {isEditMode ? "Update" : "Save"}
+                {currentId ? "Update" : "Save"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -867,4 +903,3 @@ export default function AddSubscription() {
     </KeyboardAvoidingView>
   );
 }
-

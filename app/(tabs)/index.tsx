@@ -20,8 +20,17 @@ import DatabaseService from "@/utils/DatabaseService";
 import { formatCurrency } from "@/utils/formatUtils";
 import { defaultImages } from "@/constants/ImageConstants";
 import { VALID_ICONS, type IconName } from "@/constants/IconConstants";
-import { LinearGradient } from 'expo-linear-gradient';
-import { parse, differenceInDays, formatDistanceToNowStrict, addDays, addMonths, addYears, isBefore, format } from 'date-fns';
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  parse,
+  differenceInDays,
+  formatDistanceToNowStrict,
+  addDays,
+  addMonths,
+  addYears,
+  isBefore,
+  format,
+} from "date-fns";
 
 interface Subscription {
   id: string;
@@ -36,22 +45,28 @@ interface Subscription {
   reminder?: string;
 }
 
-const screenWidth = Dimensions.get('window').width;
+const screenWidth = Dimensions.get("window").width;
 const iconSize = screenWidth * 0.12;
 const iconBorderRadius = iconSize * 0.167;
 const iconMarginRight = screenWidth * 0.035;
 
 // Define Tab Bar Height for padding
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 72;
+const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 72;
 
 // Helper function to calculate the next due date if the current one is past
-const calculateNextDueDate = (dueDateString: string, billing: string): string => {
-  if (!dueDateString || typeof dueDateString !== 'string') {
-    console.warn('Invalid dueDateString passed to calculateNextDueDate:', dueDateString);
+const calculateNextDueDate = (
+  dueDateString: string,
+  billing: string,
+): string => {
+  if (!dueDateString || typeof dueDateString !== "string") {
+    console.warn(
+      "Invalid dueDateString passed to calculateNextDueDate:",
+      dueDateString,
+    );
     return dueDateString;
   }
   try {
-    let nextDueDate = parse(dueDateString, 'dd MMMM yyyy', new Date());
+    let nextDueDate = parse(dueDateString, "dd MMMM yyyy", new Date());
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize today to start of day
 
@@ -63,13 +78,18 @@ const calculateNextDueDate = (dueDateString: string, billing: string): string =>
       } else if (billing === "Yearly") {
         nextDueDate = addYears(nextDueDate, 1);
       } else {
-        console.warn(`Unknown billing cycle: ${billing} for due date: ${dueDateString}`);
+        console.warn(
+          `Unknown billing cycle: ${billing} for due date: ${dueDateString}`,
+        );
         break;
       }
     }
-    return format(nextDueDate, 'dd MMMM yyyy');
+    return format(nextDueDate, "dd MMMM yyyy");
   } catch (error) {
-    console.error(`Error in calculateNextDueDate for date "${dueDateString}" and billing "${billing}":`, error);
+    console.error(
+      `Error in calculateNextDueDate for date "${dueDateString}" and billing "${billing}":`,
+      error,
+    );
     return dueDateString;
   }
 };
@@ -78,11 +98,14 @@ const calculateNextDueDate = (dueDateString: string, billing: string): string =>
 const getDaysUntilDue = (dueDateString: string): React.JSX.Element | string => {
   try {
     // Ensure dueDateString is valid before parsing
-    if (!dueDateString || typeof dueDateString !== 'string') {
-      console.warn('Invalid dueDateString passed to getDaysUntilDue:', dueDateString);
+    if (!dueDateString || typeof dueDateString !== "string") {
+      console.warn(
+        "Invalid dueDateString passed to getDaysUntilDue:",
+        dueDateString,
+      );
       return "Invalid date";
     }
-    const dueDate = parse(dueDateString, 'dd MMMM yyyy', new Date());
+    const dueDate = parse(dueDateString, "dd MMMM yyyy", new Date());
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const daysDifference = differenceInDays(dueDate, today);
@@ -91,14 +114,25 @@ const getDaysUntilDue = (dueDateString: string): React.JSX.Element | string => {
       // This case should be rare if loadSubscriptions works correctly.
       return <Text style={styles.detailTextStyle}>Processing renewal...</Text>;
     } else if (daysDifference === 0) {
-      return <Text style={[styles.detailTextStyle, { fontWeight: 'bold' }]}>Due today</Text>;
+      return (
+        <Text style={[styles.detailTextStyle, { fontWeight: "bold" }]}>
+          Due today
+        </Text>
+      );
     } else {
       return (
-        <Text style={styles.detailTextStyle}>Due in <Text style={{ fontWeight: 'bold' }}>{daysDifference}</Text> day{daysDifference === 1 ? '' : 's'}</Text>
+        <Text style={styles.detailTextStyle}>
+          Due in <Text style={{ fontWeight: "bold" }}>{daysDifference}</Text>{" "}
+          day{daysDifference === 1 ? "" : "s"}
+        </Text>
       );
     }
   } catch (error) {
-    console.error("Error parsing due date in getDaysUntilDue:", dueDateString, error);
+    console.error(
+      "Error parsing due date in getDaysUntilDue:",
+      dueDateString,
+      error,
+    );
     return "Invalid date";
   }
 };
@@ -120,7 +154,7 @@ const formatReminder = (reminderValue?: string): string | null => {
     case "1_month_before":
       return "1 month before";
     default:
-      return reminderValue.replace(/_/g, ' ');
+      return reminderValue.replace(/_/g, " ");
   }
 };
 
@@ -134,42 +168,62 @@ export default function SubscriptionList() {
 
   const loadSubscriptions = async () => {
     try {
-      let fetchedSubscriptions = await DatabaseService.getSubscriptions<Subscription>();
+      let fetchedSubscriptions =
+        await DatabaseService.getSubscriptions<Subscription>();
 
       const processedSubscriptions = await Promise.all(
         (fetchedSubscriptions || []).map(async (sub) => {
-          if (!sub || typeof sub.dueDate !== 'string' || typeof sub.billing !== 'string') {
-            console.warn('Invalid subscription object, dueDate, or billing:', sub);
+          if (
+            !sub ||
+            typeof sub.dueDate !== "string" ||
+            typeof sub.billing !== "string"
+          ) {
+            console.warn(
+              "Invalid subscription object, dueDate, or billing:",
+              sub,
+            );
             return sub;
           }
 
           try {
             // Validate dueDate before extensive processing
-            parse(sub.dueDate, 'dd MMMM yyyy', new Date()); // This will throw if sub.dueDate is not a parseable date string
+            parse(sub.dueDate, "dd MMMM yyyy", new Date()); // This will throw if sub.dueDate is not a parseable date string
 
-            const originalDueDateObj = parse(sub.dueDate, 'dd MMMM yyyy', new Date());
+            const originalDueDateObj = parse(
+              sub.dueDate,
+              "dd MMMM yyyy",
+              new Date(),
+            );
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
             if (isBefore(originalDueDateObj, today)) {
-              const newDueDateString = calculateNextDueDate(sub.dueDate, sub.billing);
+              const newDueDateString = calculateNextDueDate(
+                sub.dueDate,
+                sub.billing,
+              );
               if (sub.dueDate !== newDueDateString) {
                 const updatedSub = { ...sub, dueDate: newDueDateString };
-                await DatabaseService.updateSubscriptionById(sub.id, updatedSub);
+                await DatabaseService.updateSubscriptionById(
+                  sub.id,
+                  updatedSub,
+                );
                 return updatedSub;
               }
             }
             return sub;
           } catch (e) {
             // Catch errors from parsing sub.dueDate or during calculateNextDueDate if it throws
-            console.error(`Error processing subscription ${sub.id} for due date update (original dueDate: "${sub.dueDate}"):`, e);
+            console.error(
+              `Error processing subscription ${sub.id} for due date update (original dueDate: "${sub.dueDate}"):`,
+              e,
+            );
             return sub;
           }
-        })
+        }),
       );
 
       setSubscriptions(processedSubscriptions);
-
     } catch (error) {
       console.error("Error loading or updating subscriptions:", error);
       setSubscriptions([]);
@@ -182,8 +236,8 @@ export default function SubscriptionList() {
     }, []),
   );
 
-  const filteredSubscriptions = subscriptions.filter(subscription =>
-    subscription.appName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredSubscriptions = subscriptions.filter((subscription) =>
+    subscription.appName.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -200,7 +254,12 @@ export default function SubscriptionList() {
       </View>
 
       <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={20} color="#9D9DB5" style={styles.searchIcon} />
+        <Ionicons
+          name="search-outline"
+          size={20}
+          color="#9D9DB5"
+          style={styles.searchIcon}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Search Subscriptions..."
@@ -236,10 +295,12 @@ export default function SubscriptionList() {
           filteredSubscriptions.map((subscription) => {
             let imageSource = null;
             if (subscription.customImage) {
-              if (subscription.customImage.startsWith('file://') ||
-                  subscription.customImage.startsWith('http://') ||
-                  subscription.customImage.startsWith('https://') ||
-                  subscription.customImage.startsWith('data:')) {
+              if (
+                subscription.customImage.startsWith("file://") ||
+                subscription.customImage.startsWith("http://") ||
+                subscription.customImage.startsWith("https://") ||
+                subscription.customImage.startsWith("data:")
+              ) {
                 imageSource = { uri: subscription.customImage };
               } else if (defaultImages[subscription.customImage]) {
                 imageSource = defaultImages[subscription.customImage];
@@ -249,83 +310,122 @@ export default function SubscriptionList() {
             console.log("Subscription item:", subscription);
             console.log("Determined imageSource:", imageSource);
 
-            const daysUntilDueTextElement = getDaysUntilDue(subscription.dueDate);
+            const daysUntilDueTextElement = getDaysUntilDue(
+              subscription.dueDate,
+            );
             const reminderText = formatReminder(subscription.reminder);
 
             return (
-            <LinearGradient
-              key={subscription.id}
-              colors={['#2E2E48', '#1C1C2E']}
-              style={styles.subscriptionCard}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.cardContent}>
-                {/* Image Container and Reminder below it */}
-                <View style={styles.imageAndReminderContainer}> 
-                  <View style={styles.imageOuterContainer}>
-                    {imageSource ? (
-                      <Image
-                        source={imageSource}
-                        style={styles.primaryImage}
-                        resizeMode="contain"
-                      />
-                    ) : (
-                      <View style={styles.primaryImagePlaceholder} />
+              <LinearGradient
+                key={subscription.id}
+                colors={["#2E2E48", "#1C1C2E"]}
+                style={styles.subscriptionCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.cardContent}>
+                  {/* Image Container and Reminder below it */}
+                  <View style={styles.imageAndReminderContainer}>
+                    <View style={styles.imageOuterContainer}>
+                      {imageSource ? (
+                        <Image
+                          source={imageSource}
+                          style={styles.primaryImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <View style={styles.primaryImagePlaceholder} />
+                      )}
+                    </View>
+                    {reminderText && (
+                      <View style={styles.reminderBelowIconContainer}>
+                        <Ionicons
+                          name="notifications-outline"
+                          size={12}
+                          color="#9D9DB5"
+                          style={styles.detailIconStyle}
+                        />
+                        <Text
+                          style={styles.reminderBelowIconText}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {reminderText}
+                        </Text>
+                      </View>
                     )}
                   </View>
-                  {reminderText && (
-                    <View style={styles.reminderBelowIconContainer}>
-                      <Ionicons name="notifications-outline" size={12} color="#9D9DB5" style={styles.detailIconStyle} />
-                      <Text style={styles.reminderBelowIconText} numberOfLines={1} ellipsizeMode="tail">{reminderText}</Text>
-                    </View>
-                  )}
-                </View>
 
-                {/* Info Column (Name, Due, Category) */}
-                <View style={styles.infoColumnStyle}>
-                  <Text style={styles.appNameStyle} numberOfLines={1} ellipsizeMode="tail">{subscription.appName}</Text>
-                  <View style={styles.detailRowStyle}>
-                    <Ionicons name="calendar-outline" size={14} color="#9D9DB5" style={styles.detailIconStyle} />
-                    {/* Render the JSX element directly */}
-                    {daysUntilDueTextElement}
-                  </View>
-                  {subscription.category && (
+                  {/* Info Column (Name, Due, Category) */}
+                  <View style={styles.infoColumnStyle}>
+                    <Text
+                      style={styles.appNameStyle}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {subscription.appName}
+                    </Text>
                     <View style={styles.detailRowStyle}>
-                      <Ionicons name="pricetag-outline" size={14} color="#9D9DB5" style={styles.detailIconStyle} />
-                      <Text style={styles.detailTextStyle} numberOfLines={1} ellipsizeMode="tail">{subscription.category}</Text>
+                      <Ionicons
+                        name="calendar-outline"
+                        size={14}
+                        color="#9D9DB5"
+                        style={styles.detailIconStyle}
+                      />
+                      {/* Render the JSX element directly */}
+                      {daysUntilDueTextElement}
                     </View>
+                    {subscription.category && (
+                      <View style={styles.detailRowStyle}>
+                        <Ionicons
+                          name="pricetag-outline"
+                          size={14}
+                          color="#9D9DB5"
+                          style={styles.detailIconStyle}
+                        />
+                        <Text
+                          style={styles.detailTextStyle}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {subscription.category}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Price Column */}
+                  <View style={styles.priceColumnStyle}>
+                    <Text style={styles.priceTextStyle}>
+                      {formatCurrency(parseFloat(subscription.price))}
+                    </Text>
+                    <Text style={styles.billingCycleTextStyle}>
+                      /{subscription.billing}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.buttonContainer}>
+                  {/* Subscription Type Icon - Bottom Left */}
+                  {subscription.icon && (
+                    <Ionicons
+                      name={subscription.icon}
+                      size={18}
+                      color="#9D9DB5"
+                      style={styles.subscriptionTypeIcon}
+                    />
                   )}
-                </View>
 
-                {/* Price Column */}
-                <View style={styles.priceColumnStyle}>
-                  <Text style={styles.priceTextStyle}>{formatCurrency(parseFloat(subscription.price))}</Text>
-                  <Text style={styles.billingCycleTextStyle}>/{subscription.billing}</Text>
+                  {/* Container for right-aligned action buttons */}
+                  <View style={styles.actionButtonsContainer}>
+                    <EditSubscriptionButton id={subscription.id} />
+                    <RemoveSubscriptionButton
+                      id={subscription.id}
+                      onUpdate={loadSubscriptions}
+                    />
+                  </View>
                 </View>
-              </View>
-              <View style={styles.buttonContainer}>
-                {/* Subscription Type Icon - Bottom Left */}
-                {subscription.icon && (
-                  <Ionicons
-                    name={subscription.icon}
-                    size={18}
-                    color="#9D9DB5"
-                    style={styles.subscriptionTypeIcon}
-                  />
-                )}
-
-                {/* Container for right-aligned action buttons */}
-                <View style={styles.actionButtonsContainer}>
-                  <EditSubscriptionButton id={subscription.id} />
-                  <RemoveSubscriptionButton
-                    id={subscription.id}
-                    onUpdate={loadSubscriptions}
-                  />
-                </View>
-              </View>
-            </LinearGradient>
-            )
+              </LinearGradient>
+            );
           })
         )}
       </ScrollView>
@@ -399,15 +499,15 @@ const styles = StyleSheet.create({
     height: iconSize,
     borderRadius: iconBorderRadius,
     backgroundColor: "#FFFFFF",
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "#E0E0E0",
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   imageAndReminderContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
+    flexDirection: "column",
+    alignItems: "center",
     marginRight: iconMarginRight,
   },
   primaryImage: {
@@ -472,18 +572,18 @@ const styles = StyleSheet.create({
   },
   actionButtonsContainer: {
     flexDirection: "row",
-    marginLeft: 'auto',
+    marginLeft: "auto",
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A1A2E',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A1A2E",
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#2D2D44',
+    borderColor: "#2D2D44",
   },
   searchIcon: {
     marginRight: 8,
@@ -491,12 +591,12 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 48,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
   },
   reminderBelowIconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
   },
   reminderBelowIconText: {

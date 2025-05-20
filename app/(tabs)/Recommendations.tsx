@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Define Tab Bar Height for padding
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 72;
+const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 72;
 
 // Mock data for recommended apps by category
 const recommendedApps = {
@@ -285,11 +285,7 @@ const RecommendationCard = ({ app }: { app: App }) => {
   return (
     <View style={styles.card}>
       <View style={styles.logoContainer}>
-        <Image
-          source={app.logo}
-          style={styles.appLogo}
-          resizeMode="contain"
-        />
+        <Image source={app.logo} style={styles.appLogo} resizeMode="contain" />
       </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -443,4 +439,3 @@ const styles = StyleSheet.create({
     paddingBottom: TAB_BAR_HEIGHT + 20,
   },
 });
-

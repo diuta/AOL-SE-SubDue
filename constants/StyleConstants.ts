@@ -10,5 +10,5 @@ export const StyleConstants = {
   // For justifyContent: "center" alone
   justifyContentCenter: {
     justifyContent: "center" as const,
-  }
-}; 
+  },
+};

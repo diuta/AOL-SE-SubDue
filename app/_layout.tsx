@@ -7,10 +7,8 @@ import {
   RedRose_700Bold,
   useFonts,
 } from "@expo-google-fonts/red-rose";
-import * as Notifications from 'expo-notifications';
-import {
-  setupNotificationResponseListener,
-} from "@/utils/NotificationService";
+import * as Notifications from "expo-notifications";
+import { setupNotificationResponseListener } from "@/utils/NotificationService";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({

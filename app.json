@@ -4,18 +4,20 @@
     "slug": "SubDue",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/SubdueIcon.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.venneth.subdue"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/SubdueIcon.jpg",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.venneth.SubDue"
     },
     "web": {
       "bundler": "metro",
@@ -38,6 +40,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7596324e-34c6-4fb4-b946-eb58777810b9"
+      }
     }
   }
 }

@@ -31,7 +31,7 @@ jobs:
         run: npm install -g @expo/cli
 
       - name: Build web app
-        run: npx expo export --platform web
+        run: npx expo export --platform web --base-url /SubDue/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5 # Configures GitHub Pages for deployment

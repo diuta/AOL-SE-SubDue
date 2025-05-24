@@ -39,6 +39,8 @@ jobs:
           find dist -name "*.html" -exec sed -i 's|src="/_expo/|src="/SubDue/_expo/|g' {} \;
           find dist -name "*.html" -exec sed -i 's|href="/_expo/|href="/SubDue/_expo/|g' {} \;
           find dist -name "*.html" -exec sed -i 's|href="/favicon.ico"|href="/SubDue/favicon.ico"|g' {} \;
+          find dist -name "*.js" -exec sed -i 's|"/assets/|"/SubDue/assets/|g' {} \;
+          find dist -name "*.css" -exec sed -i 's|"/assets/|"/SubDue/assets/|g' {} \;
 
       - name: Setup Pages
         uses: actions/configure-pages@v5 # Configures GitHub Pages for deployment

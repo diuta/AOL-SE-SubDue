@@ -31,7 +31,11 @@ jobs:
         run: npm install -g @expo/cli
 
       - name: Build web app
-        run: npx expo export --platform web --base-url /SubDue/
+        run: npx expo export --platform web
+
+      - name: Fix asset paths for GitHub Pages
+        run: |
+          find dist -name "*.html" -exec sed -i 's|<meta charSet="utf-8"/>|<base href="/SubDue/"><meta charSet="utf-8"/>|g' {} \;
 
       - name: Setup Pages
         uses: actions/configure-pages@v5 # Configures GitHub Pages for deployment

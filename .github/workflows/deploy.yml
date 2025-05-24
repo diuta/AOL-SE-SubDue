@@ -36,6 +36,9 @@ jobs:
       - name: Fix asset paths for GitHub Pages
         run: |
           find dist -name "*.html" -exec sed -i 's|<meta charSet="utf-8"/>|<base href="/SubDue/"><meta charSet="utf-8"/>|g' {} \;
+          find dist -name "*.html" -exec sed -i 's|src="/_expo/|src="/SubDue/_expo/|g' {} \;
+          find dist -name "*.html" -exec sed -i 's|href="/_expo/|href="/SubDue/_expo/|g' {} \;
+          find dist -name "*.html" -exec sed -i 's|href="/favicon.ico"|href="/SubDue/favicon.ico"|g' {} \;
 
       - name: Setup Pages
         uses: actions/configure-pages@v5 # Configures GitHub Pages for deployment

@@ -7,9 +7,9 @@ on:
 
 # Grant necessary permissions for the workflow to interact with GitHub Pages
 permissions:
-  contents: read    # To checkout the repository
-  pages: write      # To deploy to GitHub Pages
-  id-token: write   # To authenticate with GitHub Pages
+  contents: read # To checkout the repository
+  pages: write # To deploy to GitHub Pages
+  id-token: write # To authenticate with GitHub Pages
 
 jobs:
   # Build job: prepares the artifact for deployment
@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Using Node.js 20 for compatibility with Expo
+          node-version: "20" # Using Node.js 20 for compatibility with Expo
 
       - name: Install dependencies
         run: npm ci
@@ -84,4 +84,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4 # Deploys the artifact 
+        uses: actions/deploy-pages@v4 # Deploys the artifact

@@ -39,8 +39,7 @@
       "expo-web-browser"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "basePath": "/SubDue"
+      "typedRoutes": true
     },
     "extra": {
       "router": {},

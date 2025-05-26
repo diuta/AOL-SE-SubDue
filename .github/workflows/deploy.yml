@@ -63,7 +63,7 @@ jobs:
 
       - name: Add SPA redirect handler to index.html
         run: |
-          sed -i 's|</head>|<script>(function(){var redirect = sessionStorage.redirect; delete sessionStorage.redirect; if (redirect && redirect !== location.pathname && redirect !== "/SubDue/") { var newPath = redirect.replace("/SubDue", ""); if (newPath && newPath !== "/") { history.replaceState(null, null, newPath); } }})()</script></head>|g' dist/index.html
+          echo '<script>(function(){var redirect = sessionStorage.redirect; delete sessionStorage.redirect; if (redirect && redirect !== location.pathname) { history.replaceState(null, null, redirect); }})()</script>' >> dist/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5 # Configures GitHub Pages for deployment

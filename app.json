@@ -13,6 +13,10 @@
       "bundleIdentifier": "com.venneth.subdue"
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/SubdueIcon.jpg",
+        "backgroundColor": "#ffffff"
+      },
       "package": "com.venneth.SubDue"
     },
     "web": {
